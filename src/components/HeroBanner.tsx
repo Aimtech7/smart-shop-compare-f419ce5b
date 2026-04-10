@@ -2,8 +2,19 @@ import { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { ChevronLeft, ChevronRight, Zap, ShoppingBag, TrendingUp } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import heroBannerImg from '@/assets/hero-banner.jpg';
 
 const slides = [
+  {
+    title: 'Find the Best Deals\nAcross All Stores!',
+    subtitle: 'Compare Prices. Save Money. Shop Smart.',
+    cta: 'Start Saving Now',
+    ctaLink: '/search',
+    gradient: 'from-[#1a3a2a] via-[#1a4a35] to-[#0d6b4a]',
+    icon: Zap,
+    image: heroBannerImg,
+    imageOpacity: 'opacity-40',
+  },
   {
     title: 'Shop Smart\nLive Better',
     subtitle: 'Compare prices across 240+ stores and find the best deals.',
@@ -61,7 +72,7 @@ export function HeroBanner() {
       <div className="absolute inset-0 overflow-hidden">
         <div className="absolute -top-20 -right-20 w-80 h-80 rounded-full bg-white/5" />
         <div className="absolute -bottom-10 -left-10 w-60 h-60 rounded-full bg-white/5" />
-        <img src={slide.image} alt="" className="absolute right-0 bottom-0 w-1/2 h-full object-cover opacity-20 sm:opacity-30 mix-blend-overlay" loading="lazy" />
+        <img src={slide.image} alt="" className={`absolute right-0 bottom-0 w-1/2 h-full object-cover ${slide.imageOpacity || 'opacity-20 sm:opacity-30'} mix-blend-overlay`} loading="lazy" />
       </div>
 
       <div className={`relative z-10 p-8 sm:p-12 flex flex-col justify-center min-h-[280px] sm:min-h-[340px] transition-opacity duration-300 ${isTransitioning ? 'opacity-0' : 'opacity-100'}`}>
