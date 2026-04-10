@@ -1,0 +1,11 @@
+commit df23f84c55721b3a4442fb31022034e7a6810a75
+Merge: 8dcede9 02bdd27
+Author: gpt-engineer-app[bot] <159125892+gpt-engineer-app[bot]@users.noreply.github.com>
+Date:   Tue Apr 7 05:33:24 2026 +0000
+
+    Connected to Lovable Cloud
+    
+    Set up Supabase backend for authentication and database, added real auth flow, RBAC, and user profiles. Implemented rebrand to The Buyer, added product images across categories, updated login/signup, protected routes, and UI refresh to support the new backend. Also updated environment and config for Supabase integration.
+    
+    X-Lovable-Edit-ID: edt-0e4f054d-2797-4bf0-87ae-c1fde91bbcd0
+    Co-authored-by: Aimtech7 <160168944+Aimtech7@users.noreply.github.com>
