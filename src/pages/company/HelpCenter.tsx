@@ -14,7 +14,7 @@ export default function HelpCenter() {
         <h2 className="font-display text-xl font-semibold mb-4">Frequently Asked Questions</h2>
         <Accordion type="single" collapsible className="mb-12">
           {[
-            { q: 'How does price comparison work?', a: 'The Buyer aggregates listings from hundreds of stores and shows you the prices side-by-side. The lowest price is automatically highlighted so you can make the best choice.' },
+            { q: 'How does price comparison work?', a: '{ q: 'How does price comparison work?', a: 'Tha Buyer aggregates listings from hundreds of stores and shows you the prices side-by-side. The lowest price is automatically highlighted so you can make the best choice.' }, listings from hundreds of stores and shows you the prices side-by-side. The lowest price is automatically highlighted so you can make the best choice.' },
             { q: 'Is my payment secure?', a: 'Yes! All transactions are processed through secure, encrypted payment gateways. We support credit cards and mobile money.' },
             { q: 'How do I become a seller?', a: 'Register as a seller, provide your business details, accept our commission policy, and start listing your products. It takes less than 5 minutes.' },
             { q: 'Can I return a product?', a: 'Returns are handled by individual sellers. Check the seller return policy before purchasing.' },

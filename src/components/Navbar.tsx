@@ -52,7 +52,7 @@ export function Navbar() {
             <Link to="/help" className="hover:underline transition">Help Center</Link>
           </div>
           <div className="flex items-center gap-4">
-            <Link to="/how-to-sell" className="hover:underline transition">Sell on The Buyer</Link>
+            <Link to="/how-to-sell" className="hover:underline transition"><Link to="/how-to-sell" className="hover:underline transition">Sell on Tha Buyer</Link></Link>
             <Link to="/about" className="hover:underline transition">About Us</Link>
           </div>
         </div>

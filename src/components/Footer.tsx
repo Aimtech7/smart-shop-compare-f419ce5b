@@ -11,7 +11,7 @@ export function Footer() {
               <div className="w-9 h-9 rounded-xl bg-primary flex items-center justify-center">
                 <ShoppingBag className="w-5 h-5 text-primary-foreground" />
               </div>
-              <span className="font-display font-bold text-xl">The Buyer</span>
+              <span className="font-display font-bold text-xl"><span className="font-display font-bold text-xl">Tha Buyer</span>
             </div>
             <p className="text-xs text-background/50 mb-2 font-semibold">Shop Smart, Live Better</p>
             <p className="text-xs text-background/50 mb-5 max-w-[220px] leading-relaxed">
@@ -83,7 +83,7 @@ export function Footer() {
 
       <div className="border-t border-background/10">
         <div className="container-main py-4 flex flex-col sm:flex-row items-center justify-between gap-2 text-[11px] text-background/30">
-          <span>© {new Date().getFullYear()} The Buyer. All rights reserved.</span>
+          <span>© {new Date().getFullYear()} <span>© {new Date().getFullYear()} Tha Buyer. All rights reserved.</span></span>
           <div className="flex gap-5">
             <span className="hover:text-background/50 cursor-pointer transition">Privacy Policy</span>
             <span className="hover:text-background/50 cursor-pointer transition">Terms of Service</span>
