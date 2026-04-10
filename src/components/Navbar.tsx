@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { useStore } from '@/store/useStore';
 import { useAuth } from '@/hooks/useAuth';
 import { ThemeToggle } from '@/components/ThemeToggle';
+import logoImg from '@/assets/logo.jpg';
 
 const categories = [
   { name: 'Electronics', icon: Smartphone, color: 'text-info' },
@@ -63,10 +64,8 @@ export function Navbar() {
         <div className="container-main">
           <div className="flex items-center h-16 gap-4">
             {/* Logo */}
-            <Link to="/" className="flex items-center gap-2.5 shrink-0">
-              <div className="w-9 h-9 rounded-xl bg-primary flex items-center justify-center shadow-md shadow-primary/20">
-                <ShoppingBag className="w-5 h-5 text-primary-foreground" />
-              </div>
+            <Link to="/" className="flex items-center gap-2 shrink-0">
+              <img src={logoImg} alt="Tha Buyer" className="h-10 w-auto rounded-lg" />
               <span className="font-display font-bold text-xl hidden sm:block">Tha Buyer</span>
             </Link>
 
