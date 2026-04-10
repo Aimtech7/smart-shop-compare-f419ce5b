@@ -9,7 +9,8 @@ import { Label } from '@/components/ui/label';
 import { useAuth } from '@/hooks/useAuth';
 import { useStore } from '@/store/useStore';
 import { toast } from 'sonner';
-import { ShoppingBag, Loader2 } from 'lucide-react';
+import { Loader2 } from 'lucide-react';
+import logo from '@/assets/logo.jpg';
 
 const loginSchema = z.object({
   email: z.string().email('Invalid email'),
