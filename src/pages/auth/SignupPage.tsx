@@ -83,10 +83,10 @@ export default function SignupPage() {
         <div className="text-center mb-8">
           <Link to="/" className="inline-flex items-center gap-2 mb-4">
             <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center"><ShoppingBag className="w-5 h-5 text-primary-foreground" /></div>
-            <span className="font-display font-bold text-xl"><span className="font-display font-bold text-xl">Tha Buyer</span>
+            <span className="font-display font-bold text-xl">Tha Buyer</span>
           </Link>
           <h1 className="font-display text-2xl font-bold">Create Account</h1>
-          <p className="text-sm text-muted-foreground mt-1"><p className="text-sm text-muted-foreground mt-1">Join Tha Buyer today</p></p>
+          <p className="text-sm text-muted-foreground mt-1">Join Tha Buyer today</p> className="text-sm text-muted-foreground mt-1">Join Tha Buyer today</p></p>
         </div>
 
         <div className="flex rounded-lg border p-1 mb-6 bg-secondary/50">
