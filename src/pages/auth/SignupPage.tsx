@@ -67,7 +67,8 @@ export default function SignupPage() {
 
   if (showVerification) {
     return (
-      <div className="min-h-screen flex items-center justify-center p-4">
+      <div className="min-h-screen flex items-center justify-center p-4 relative overflow-hidden">
+        <img src={logo} alt="" className="absolute inset-0 w-full h-full object-contain opacity-[0.06] dark:opacity-[0.04] pointer-events-none select-none" />
         <div className="max-w-md w-full text-center space-y-4">
           <img src={logo} alt="Tha Buyer" className="w-16 h-16 rounded-full object-cover mx-auto" />
           <h1 className="font-display text-2xl font-bold">Verify Your Email</h1>
@@ -79,7 +80,9 @@ export default function SignupPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4">
+    <div className="min-h-screen flex items-center justify-center p-4 relative overflow-hidden">
+      {/* Background logo watermark */}
+      <img src={logo} alt="" className="absolute inset-0 w-full h-full object-contain opacity-[0.06] dark:opacity-[0.04] pointer-events-none select-none" />
       <div className="max-w-md w-full">
         <div className="text-center mb-8">
           <Link to="/" className="inline-flex items-center gap-2 mb-4">

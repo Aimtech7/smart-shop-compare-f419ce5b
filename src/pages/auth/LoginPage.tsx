@@ -64,7 +64,9 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4">
+    <div className="min-h-screen flex items-center justify-center p-4 relative overflow-hidden">
+      {/* Background logo watermark */}
+      <img src={logo} alt="" className="absolute inset-0 w-full h-full object-contain opacity-[0.06] dark:opacity-[0.04] pointer-events-none select-none" />
       <div className="max-w-md w-full">
         <div className="text-center mb-8">
           <Link to="/" className="inline-flex items-center gap-2 mb-4">
