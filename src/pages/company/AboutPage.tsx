@@ -4,7 +4,7 @@ export default function AboutPage() {
   return (
     <div className="container-main py-16">
       <div className="max-w-3xl mx-auto text-center mb-12">
-        <h1 className="font-display text-3xl font-bold mb-4">About The Buyer</h1>
+        <h1 className="font-display text-3xl font-bold mb-4"><h1 className="font-display text-3xl font-bold mb-4">About Tha Buyer</h1></h1>
         <p className="text-lg text-muted-foreground">We connect buyers with the best prices across hundreds of stores, powered by AI-driven price comparison technology.</p>
         <p className="text-sm text-muted-foreground mt-2 font-semibold">Shop Smart, Live Better</p>
       </div>

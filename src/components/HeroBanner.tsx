@@ -14,7 +14,7 @@ const slides = [
     image: 'https://images.unsplash.com/photo-1607082348824-0a96f2a4b9da?w=600&q=80',
   },
   {
-    title: 'Start Selling\nOn The Buyer',
+    title: 'Start Selling\nOn Tha Buyer',
     subtitle: 'Join thousands of sellers. Set up your store in minutes.',
     cta: 'Register as Seller',
     ctaLink: '/auth/signup?role=seller',
@@ -69,7 +69,7 @@ export function HeroBanner() {
           <div className="w-10 h-10 rounded-xl bg-white/20 backdrop-blur-sm flex items-center justify-center">
             <Icon className="w-5 h-5" />
           </div>
-          <span className="text-xs font-semibold uppercase tracking-wider opacity-80">The Buyer</span>
+          <span className="text-xs font-semibold uppercase tracking-wider opacity-80">Tha Buyer</span>
         </div>
         <h2 className="font-display text-3xl sm:text-4xl lg:text-5xl font-bold whitespace-pre-line leading-tight mb-3">
           {slide.title}

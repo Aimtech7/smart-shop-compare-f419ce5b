@@ -6,7 +6,7 @@ export default function HowToSellPage() {
   return (
     <div className="container-main py-16">
       <div className="max-w-3xl mx-auto text-center mb-12">
-        <h1 className="font-display text-3xl font-bold mb-4">Start Selling on The Buyer</h1>
+        <h1 className="font-display text-3xl font-bold mb-4"><h1 className="font-display text-3xl font-bold mb-4">Start Selling on Tha Buyer</h1></h1>
         <p className="text-lg text-muted-foreground">Join 240+ stores and reach thousands of buyers looking for the best prices.</p>
       </div>
       <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">

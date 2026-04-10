@@ -298,7 +298,7 @@ export default function LandingPage() {
       {/* CTA Banner */}
       <section className="container-main pb-12">
         <div className="rounded-2xl border-2 border-dashed border-primary/30 bg-primary/5 p-8 sm:p-12 text-center">
-          <h2 className="font-display text-2xl sm:text-3xl font-bold mb-3">Start Selling on The Buyer</h2>
+          <h2 className="font-display text-2xl sm:text-3xl font-bold mb-3"><h2 className="font-display text-2xl sm:text-3xl font-bold mb-3">Start Selling on Tha Buyer</h2></h2>
           <p className="text-muted-foreground mb-6 max-w-md mx-auto text-sm">Join 240+ stores and reach thousands of buyers. Set up your store in minutes.</p>
           <Link to="/auth/signup?role=seller">
             <Button size="lg" className="shadow-lg shadow-primary/20">
