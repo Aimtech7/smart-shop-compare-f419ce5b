@@ -68,7 +68,7 @@ export default function LoginPage() {
       <div className="max-w-md w-full">
         <div className="text-center mb-8">
           <Link to="/" className="inline-flex items-center gap-2 mb-4">
-            <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center"><ShoppingBag className="w-5 h-5 text-primary-foreground" /></div>
+            <img src={logo} alt="Tha Buyer" className="w-8 h-8 rounded-lg object-cover" />
             <span className="font-display font-bold text-xl">Tha Buyer</span>
           </Link>
           <h1 className="font-display text-2xl font-bold">Welcome Back</h1>

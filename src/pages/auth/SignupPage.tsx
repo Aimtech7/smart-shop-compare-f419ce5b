@@ -69,7 +69,7 @@ export default function SignupPage() {
     return (
       <div className="min-h-screen flex items-center justify-center p-4">
         <div className="max-w-md w-full text-center space-y-4">
-          <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mx-auto"><ShoppingBag className="w-8 h-8 text-primary" /></div>
+          <img src={logo} alt="Tha Buyer" className="w-16 h-16 rounded-full object-cover mx-auto" />
           <h1 className="font-display text-2xl font-bold">Verify Your Email</h1>
           <p className="text-muted-foreground">We've sent a verification link to your email address. Please check your inbox and click the link to activate your account.</p>
           <Button onClick={() => navigate('/auth/login')}>Go to Login</Button>
@@ -83,7 +83,7 @@ export default function SignupPage() {
       <div className="max-w-md w-full">
         <div className="text-center mb-8">
           <Link to="/" className="inline-flex items-center gap-2 mb-4">
-            <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center"><ShoppingBag className="w-5 h-5 text-primary-foreground" /></div>
+            <img src={logo} alt="Tha Buyer" className="w-8 h-8 rounded-lg object-cover" />
             <span className="font-display font-bold text-xl">Tha Buyer</span>
           </Link>
           <h1 className="font-display text-2xl font-bold">Create Account</h1>
