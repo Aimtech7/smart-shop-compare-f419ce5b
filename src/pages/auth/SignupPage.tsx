@@ -86,7 +86,7 @@ export default function SignupPage() {
             <span className="font-display font-bold text-xl">Tha Buyer</span>
           </Link>
           <h1 className="font-display text-2xl font-bold">Create Account</h1>
-          <p className="text-sm text-muted-foreground mt-1">Join Tha Buyer today</p> className="text-sm text-muted-foreground mt-1">Join Tha Buyer today</p></p>
+          <p className="text-sm text-muted-foreground mt-1">Join Tha Buyer today</p>
         </div>
 
         <div className="flex rounded-lg border p-1 mb-6 bg-secondary/50">
