@@ -259,6 +259,7 @@ const mockProducts: (Product & { listings: StoreListing[] })[] = [
       { id: 'l58', productId: '35', sellerId: 's1', storeName: 'TechHub Store', price: 649, stock: 7, sellerRating: 4.8 },
     ],
   },
+];
 
 const mockStores: SellerProfile[] = [
   { id: 's1', userId: 'u1', businessName: 'TechHub Store', description: 'Your one-stop tech shop', logo: '', rating: 4.8, totalSales: 15420, commissionRate: 8, isVerified: true },
