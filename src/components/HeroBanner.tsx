@@ -1,8 +1,12 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
-import { ChevronLeft, ChevronRight, Zap, ShoppingBag, TrendingUp } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Zap, ShoppingBag, TrendingUp, Sparkles, Gift, Shirt } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import heroBannerImg from '@/assets/hero-banner.jpg';
+import heroPromoImg from '@/assets/hero-promo.jpg';
+import heroFlashSaleImg from '@/assets/hero-flash-sale.jpg';
+import heroElectronicsImg from '@/assets/hero-electronics.jpg';
+import heroFashionImg from '@/assets/hero-fashion.jpg';
 
 const slides = [
   {
@@ -22,7 +26,38 @@ const slides = [
     ctaLink: '/search',
     gradient: 'from-primary via-primary/90 to-primary/70',
     icon: Zap,
-    image: 'https://images.unsplash.com/photo-1607082348824-0a96f2a4b9da?w=600&q=80',
+    image: heroPromoImg,
+    imageOpacity: 'opacity-30',
+  },
+  {
+    title: 'Top Electronics\nAt Best Prices',
+    subtitle: 'Smartphones, laptops, headphones & more from verified sellers.',
+    cta: 'Browse Electronics',
+    ctaLink: '/search?q=Electronics',
+    gradient: 'from-[#1a1a2e] via-[#16213e] to-[#0f3460]',
+    icon: Sparkles,
+    image: heroElectronicsImg,
+    imageOpacity: 'opacity-40',
+  },
+  {
+    title: 'Flash Sale\nUp to 60% Off',
+    subtitle: 'Limited-time deals on top brands. Don\'t miss out!',
+    cta: 'Grab Deals',
+    ctaLink: '/search',
+    gradient: 'from-[#e63946] via-[#d62828] to-[#c1121f]',
+    icon: Gift,
+    image: heroFlashSaleImg,
+    imageOpacity: 'opacity-30',
+  },
+  {
+    title: 'Trending Fashion\n& Accessories',
+    subtitle: 'Latest styles from Nike, Levi\'s, Ray-Ban and more.',
+    cta: 'Shop Fashion',
+    ctaLink: '/search?q=Fashion',
+    gradient: 'from-[#6b4c9a] via-[#7b5ea7] to-[#9b72cf]',
+    icon: Shirt,
+    image: heroFashionImg,
+    imageOpacity: 'opacity-30',
   },
   {
     title: 'Start Selling\nOn Tha Buyer',
