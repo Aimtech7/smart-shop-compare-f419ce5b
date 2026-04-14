@@ -30,8 +30,8 @@ export default function HelpCenter() {
         <h2 className="font-display text-xl font-semibold mb-4">Contact Support</h2>
         <div className="grid sm:grid-cols-3 gap-4">
           {[
-            { icon: Mail, label: 'Email', value: 'support@thebuyer.com' },
-            { icon: Phone, label: 'Phone', value: '+1 (555) 123-4567' },
+            { icon: Mail, label: 'Email', value: 'support@thabuyer.com' },
+            { icon: Phone, label: 'Phone', value: '+1 (952) 486-1934' },
             { icon: MessageSquare, label: 'Live Chat', value: 'Available 9am–6pm' },
           ].map(({ icon: Icon, label, value }) => (
             <div key={label} className="rounded-xl border bg-card p-5 text-center">

@@ -57,9 +57,9 @@ export function Footer() {
           <div>
             <h4 className="font-display font-semibold text-sm mb-4">Contact</h4>
             <div className="flex flex-col gap-2.5 text-xs text-background/60">
-              <span className="flex items-center gap-2"><Mail className="w-3.5 h-3.5 shrink-0" />support@thebuyer.com</span>
-              <span className="flex items-center gap-2"><Phone className="w-3.5 h-3.5 shrink-0" />+1 (555) 123-4567</span>
-              <span className="flex items-center gap-2"><MapPin className="w-3.5 h-3.5 shrink-0" />San Francisco, CA</span>
+              <span className="flex items-center gap-2"><Mail className="w-3.5 h-3.5 shrink-0" />support@thabuyer.com</span>
+              <span className="flex items-center gap-2"><Phone className="w-3.5 h-3.5 shrink-0" />+1 (952) 486-1934</span>
+              <span className="flex items-center gap-2"><MapPin className="w-3.5 h-3.5 shrink-0" />Minneapolis, MN</span>
             </div>
           </div>
         </div>
