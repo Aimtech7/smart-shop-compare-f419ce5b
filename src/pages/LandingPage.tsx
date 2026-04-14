@@ -19,10 +19,14 @@ const categoryGrid = [
   { name: 'Beauty', icon: Sparkles, color: 'bg-warning/10 text-warning', image: 'https://images.unsplash.com/photo-1596462502278-27bfdc403348?w=300&q=80' },
   { name: 'Audio', icon: Headphones, color: 'bg-info/10 text-info', image: 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=300&q=80' },
   { name: 'Toys & Games', icon: Gamepad2, color: 'bg-destructive/10 text-destructive', image: 'https://images.unsplash.com/photo-1558060370-d644479cb6f7?w=300&q=80' },
+  { name: 'Watches', icon: Clock, color: 'bg-primary/10 text-primary', image: 'https://images.unsplash.com/photo-1524592094714-0f0654e20314?w=300&q=80' },
+  { name: 'Books', icon: ArrowRight, color: 'bg-accent/10 text-accent', image: 'https://images.unsplash.com/photo-1512820790803-83ca734da794?w=300&q=80' },
+  { name: 'Automotive', icon: ArrowRight, color: 'bg-success/10 text-success', image: 'https://images.unsplash.com/photo-1492144534655-ae79c964c9d7?w=300&q=80' },
+  { name: 'Pet Supplies', icon: ArrowRight, color: 'bg-warning/10 text-warning', image: 'https://images.unsplash.com/photo-1587300003388-59208cc962cb?w=300&q=80' },
   { name: 'All Categories', icon: ArrowRight, color: 'bg-secondary text-foreground', image: 'https://images.unsplash.com/photo-1472851294608-062f824d29cc?w=300&q=80' },
 ];
 
-const brands = ['Samsung', 'Apple', 'Sony', 'Nike', 'Dyson', 'LG', 'Adidas', 'Bose'];
+const brands = ['Samsung', 'Apple', 'Sony', 'Nike', 'Dyson', 'LG', 'Adidas', 'Bose', 'Puma', 'Canon', 'Philips', 'Under Armour'];
 
 export default function LandingPage() {
   const [topStores, setTopStores] = useState<SellerProfile[]>([]);
@@ -53,7 +57,7 @@ export default function LandingPage() {
           <div className="hidden lg:block rounded-xl border bg-card p-4">
             <h3 className="font-display font-semibold text-sm mb-3">Categories</h3>
             <div className="space-y-0.5">
-              {categoryGrid.slice(0, 7).map(({ name, icon: Icon, color, image }) => (
+              {categoryGrid.slice(0, 11).map(({ name, icon: Icon, color, image }) => (
                 <button
                   key={name}
                   onClick={() => { setSearchQuery(name); navigate(`/search?q=${name}`); }}
@@ -199,7 +203,7 @@ export default function LandingPage() {
       <section className="container-main py-8">
         <h2 className="section-heading mb-6">Shop by Category</h2>
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-          {categoryGrid.slice(0, 4).map(({ name, image }) => (
+          {categoryGrid.slice(0, 8).map(({ name, image }) => (
             <button key={name} onClick={() => { setSearchQuery(name); navigate(`/search?q=${name}`); }}
               className="relative h-40 rounded-xl overflow-hidden group">
               <img src={image} alt={name} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" loading="lazy" />
