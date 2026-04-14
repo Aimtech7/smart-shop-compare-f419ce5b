@@ -144,7 +144,7 @@ export default function LandingPage() {
             <div className="p-4 sm:p-5">
               {loading ? <SkeletonList count={6} /> : (
                 <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
-                  {products.slice(0, 6).map(p => (
+                  {products.slice(0, 12).map(p => (
                     <ProductCard key={p.id} product={p} variant="compact" />
                   ))}
                 </div>
@@ -171,7 +171,7 @@ export default function LandingPage() {
         </div>
         {loading ? <SkeletonList /> : (
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-            {products.slice(0, 4).map(p => (
+            {products.slice(0, 8).map(p => (
               <ProductCard key={p.id} product={p} />
             ))}
           </div>
@@ -191,7 +191,7 @@ export default function LandingPage() {
           </div>
           {loading ? <SkeletonList /> : (
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-              {[...products].reverse().slice(0, 4).map(p => (
+              {[...products].reverse().slice(0, 8).map(p => (
                 <ProductCard key={p.id} product={p} />
               ))}
             </div>

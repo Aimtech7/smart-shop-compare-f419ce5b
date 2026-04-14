@@ -163,7 +163,102 @@ const mockProducts: (Product & { listings: StoreListing[] })[] = [
       { id: 'l41', productId: '23', sellerId: 's11', storeName: 'ToyLand', price: 39, originalPrice: 49, stock: 50, sellerRating: 4.7, isLowestPrice: true },
     ],
   },
-];
+  // Watches
+  {
+    id: '24', name: 'Apple Watch Ultra 2', description: 'Rugged titanium smartwatch with GPS', category: 'Watches',
+    images: ['https://images.unsplash.com/photo-1434493789847-2f02dc6ca35d?w=600&h=600&fit=crop'], sku: 'APL-AWU2-001', createdAt: '2024-03-18',
+    listings: [
+      { id: 'l42', productId: '24', sellerId: 's4', storeName: 'AppleZone', price: 749, originalPrice: 799, stock: 14, sellerRating: 4.9, isLowestPrice: true },
+      { id: 'l43', productId: '24', sellerId: 's1', storeName: 'TechHub Store', price: 779, stock: 8, sellerRating: 4.8 },
+    ],
+  },
+  {
+    id: '25', name: 'Rolex Submariner Homage', description: 'Premium automatic dive watch', category: 'Watches',
+    images: ['https://images.unsplash.com/photo-1524592094714-0f0654e20314?w=600&h=600&fit=crop'], sku: 'WCH-SUB-001', createdAt: '2024-01-22',
+    listings: [
+      { id: 'l44', productId: '25', sellerId: 's7', storeName: 'FashionHub', price: 289, originalPrice: 349, stock: 10, sellerRating: 4.3, isLowestPrice: true },
+    ],
+  },
+  // Books
+  {
+    id: '26', name: 'Kindle Paperwhite', description: 'E-reader with 6.8" display and warm light', category: 'Books',
+    images: ['https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?w=600&h=600&fit=crop'], sku: 'AMZ-KPW-001', createdAt: '2024-02-28',
+    listings: [
+      { id: 'l45', productId: '26', sellerId: 's1', storeName: 'TechHub Store', price: 139, originalPrice: 149, stock: 45, sellerRating: 4.8, isLowestPrice: true },
+    ],
+  },
+  {
+    id: '27', name: 'Bestseller Book Bundle', description: 'Top 5 fiction bestsellers collection', category: 'Books',
+    images: ['https://images.unsplash.com/photo-1512820790803-83ca734da794?w=600&h=600&fit=crop'], sku: 'BK-BSB-001', createdAt: '2024-03-22',
+    listings: [
+      { id: 'l46', productId: '27', sellerId: 's11', storeName: 'ToyLand', price: 59, originalPrice: 79, stock: 100, sellerRating: 4.7, isLowestPrice: true },
+    ],
+  },
+  // Automotive
+  {
+    id: '28', name: 'Dash Cam 4K Pro', description: 'Ultra HD dash camera with night vision', category: 'Automotive',
+    images: ['https://images.unsplash.com/photo-1558618666-fcd25c85f82e?w=600&h=600&fit=crop'], sku: 'DC-4KP-001', createdAt: '2024-01-30',
+    listings: [
+      { id: 'l47', productId: '28', sellerId: 's1', storeName: 'TechHub Store', price: 129, originalPrice: 169, stock: 30, sellerRating: 4.8, isLowestPrice: true },
+    ],
+  },
+  // Pet Supplies
+  {
+    id: '29', name: 'Automatic Pet Feeder', description: 'Smart WiFi pet feeder with camera', category: 'Pet Supplies',
+    images: ['https://images.unsplash.com/photo-1587300003388-59208cc962cb?w=600&h=600&fit=crop'], sku: 'PET-AF-001', createdAt: '2024-03-25',
+    listings: [
+      { id: 'l48', productId: '29', sellerId: 's8', storeName: 'HomeEssentials', price: 89, originalPrice: 119, stock: 22, sellerRating: 4.4, isLowestPrice: true },
+    ],
+  },
+  // More Electronics
+  {
+    id: '30', name: 'Canon EOS R6 Mark II', description: 'Full-frame mirrorless camera', category: 'Electronics',
+    images: ['https://images.unsplash.com/photo-1516035069371-29a1b244cc32?w=600&h=600&fit=crop'], sku: 'CAN-R6M2-001', createdAt: '2024-02-12',
+    listings: [
+      { id: 'l49', productId: '30', sellerId: 's1', storeName: 'TechHub Store', price: 2299, originalPrice: 2499, stock: 6, sellerRating: 4.8, isLowestPrice: true },
+      { id: 'l50', productId: '30', sellerId: 's3', storeName: 'GadgetPro', price: 2399, stock: 4, sellerRating: 4.2 },
+    ],
+  },
+  {
+    id: '31', name: 'Samsung 65" OLED TV', description: '4K OLED Smart TV with Dolby Atmos', category: 'Electronics',
+    images: ['https://images.unsplash.com/photo-1593359677879-a4bb92f829d1?w=600&h=600&fit=crop'], sku: 'SAM-TV65-001', createdAt: '2024-01-08',
+    listings: [
+      { id: 'l51', productId: '31', sellerId: 's1', storeName: 'TechHub Store', price: 1799, originalPrice: 2199, stock: 8, sellerRating: 4.8, isLowestPrice: true },
+      { id: 'l52', productId: '31', sellerId: 's8', storeName: 'HomeEssentials', price: 1899, stock: 5, sellerRating: 4.4 },
+    ],
+  },
+  // More Fashion
+  {
+    id: '32', name: 'Adidas Ultraboost 23', description: 'Premium running shoes with Boost midsole', category: 'Fashion',
+    images: ['https://images.unsplash.com/photo-1556906781-9a412961c28c?w=600&h=600&fit=crop'], sku: 'ADI-UB23-001', createdAt: '2024-03-28',
+    listings: [
+      { id: 'l53', productId: '32', sellerId: 's6', storeName: 'SneakerSpot', price: 179, originalPrice: 199, stock: 40, sellerRating: 4.6, isLowestPrice: true },
+      { id: 'l54', productId: '32', sellerId: 's7', storeName: 'FashionHub', price: 189, stock: 25, sellerRating: 4.3 },
+    ],
+  },
+  {
+    id: '33', name: 'North Face Puffer Jacket', description: 'Insulated winter jacket', category: 'Fashion',
+    images: ['https://images.unsplash.com/photo-1544923246-77307dd270aa?w=600&h=600&fit=crop'], sku: 'NF-PJ-001', createdAt: '2024-02-14',
+    listings: [
+      { id: 'l55', productId: '33', sellerId: 's7', storeName: 'FashionHub', price: 249, originalPrice: 299, stock: 18, sellerRating: 4.3, isLowestPrice: true },
+    ],
+  },
+  // More Home & Garden
+  {
+    id: '34', name: 'Nespresso Vertuo Next', description: 'Coffee machine with centrifusion technology', category: 'Home & Garden',
+    images: ['https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?w=600&h=600&fit=crop'], sku: 'NSP-VN-001', createdAt: '2024-03-01',
+    listings: [
+      { id: 'l56', productId: '34', sellerId: 's8', storeName: 'HomeEssentials', price: 159, originalPrice: 199, stock: 25, sellerRating: 4.4, isLowestPrice: true },
+    ],
+  },
+  {
+    id: '35', name: 'iRobot Roomba j7+', description: 'Self-emptying robot vacuum', category: 'Home & Garden',
+    images: ['https://images.unsplash.com/photo-1558618666-fcd25c85f82e?w=600&h=600&fit=crop'], sku: 'IRB-J7P-001', createdAt: '2024-01-15',
+    listings: [
+      { id: 'l57', productId: '35', sellerId: 's8', storeName: 'HomeEssentials', price: 599, originalPrice: 699, stock: 10, sellerRating: 4.4, isLowestPrice: true },
+      { id: 'l58', productId: '35', sellerId: 's1', storeName: 'TechHub Store', price: 649, stock: 7, sellerRating: 4.8 },
+    ],
+  },
 
 const mockStores: SellerProfile[] = [
   { id: 's1', userId: 'u1', businessName: 'TechHub Store', description: 'Your one-stop tech shop', logo: '', rating: 4.8, totalSales: 15420, commissionRate: 8, isVerified: true },
