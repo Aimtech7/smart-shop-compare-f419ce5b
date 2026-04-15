@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState } from 'react';
 import { useStore } from '@/store/useStore';
 import { mockAuth } from '@/services/mock/mockAuth';
 import type { UserRole } from '@/types';
@@ -8,14 +8,12 @@ export function useAuth() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Check for existing session
     const session = mockAuth.getSession();
     if (session?.user) {
       setUser(session.user);
     }
     setLoading(false);
 
-    // Listen for cross-tab auth changes
     const unsubscribe = mockAuth.onAuthStateChange((user) => {
       if (user) {
         setUser(user);
@@ -27,7 +25,7 @@ export function useAuth() {
     return unsubscribe;
   }, [setUser, storeLogout]);
 
-  const signUp = useCallback(async (data: {
+  const signUp = async (data: {
     email: string;
     password: string;
     fullName: string;
@@ -35,24 +33,23 @@ export function useAuth() {
     role: UserRole;
     businessName?: string;
   }) => {
-    const result = await mockAuth.signUp(data);
-    return result;
-  }, []);
+    return await mockAuth.signUp(data);
+  };
 
-  const signIn = useCallback(async (email: string, password: string) => {
+  const signIn = async (email: string, password: string) => {
     const { user } = await mockAuth.signIn(email, password);
     setUser(user);
     return { user };
-  }, [setUser]);
+  };
 
-  const signOut = useCallback(async () => {
+  const signOut = async () => {
     await mockAuth.signOut();
     storeLogout();
-  }, [storeLogout]);
+  };
 
-  const resetPassword = useCallback(async (email: string) => {
+  const resetPassword = async (email: string) => {
     await mockAuth.resetPassword(email);
-  }, []);
+  };
 
   return { loading, signUp, signIn, signOut, resetPassword };
 }
