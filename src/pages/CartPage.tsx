@@ -3,11 +3,12 @@ import { useNavigate, Link } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { Minus, Plus, Trash2, ShoppingBag, ArrowRight, CreditCard, Smartphone, ShoppingCart, Package, ChevronRight, Store } from 'lucide-react';
+import { Minus, Plus, Trash2, ShoppingBag, ArrowRight, CreditCard, Smartphone, ShoppingCart, Package, ChevronRight, Store, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useStore } from '@/store/useStore';
+import { api } from '@/services/api';
 import { toast } from 'sonner';
 
 const addressSchema = z.object({
@@ -28,9 +29,11 @@ const suggestedProducts = [
 ];
 
 export default function CartPage() {
-  const { cart, updateQuantity, removeFromCart, getCartTotal, getCartByStore, clearCart } = useStore();
+  const { cart, updateQuantity, removeFromCart, getCartTotal, getCartByStore, clearCart, user } = useStore();
   const [step, setStep] = useState<'cart' | 'checkout' | 'confirmation'>('cart');
   const [paymentMethod, setPaymentMethod] = useState<'card' | 'mobile_money'>('card');
+  const [orderLoading, setOrderLoading] = useState(false);
+  const [orderId, setOrderId] = useState<string>('');
   const navigate = useNavigate();
 
   const { register, handleSubmit, formState: { errors } } = useForm({
@@ -41,10 +44,19 @@ export default function CartPage() {
   const total = getCartTotal();
   const shipping = total > 50 ? 0 : 5.99;
 
-  const onCheckout = () => {
-    toast.success('Order placed successfully!');
-    clearCart();
-    setStep('confirmation');
+  const onCheckout = async (data: any) => {
+    setOrderLoading(true);
+    try {
+      const order = await api.checkout(cart, data, paymentMethod, user?.id || 'guest');
+      setOrderId(order.id);
+      clearCart();
+      setStep('confirmation');
+      toast.success('Order placed successfully!');
+    } catch (err: any) {
+      toast.error(err.message || 'Checkout failed. Please try again.');
+    } finally {
+      setOrderLoading(false);
+    }
   };
 
   if (step === 'confirmation') {
@@ -58,7 +70,7 @@ export default function CartPage() {
           <p className="text-muted-foreground mb-3">Your order has been placed successfully.</p>
           <div className="rounded-xl bg-secondary/50 p-4 mb-6 text-sm">
             <p className="text-muted-foreground">Order ID</p>
-            <p className="font-display font-bold text-lg">#ORD-{Date.now().toString().slice(-8)}</p>
+            <p className="font-display font-bold text-lg">#{orderId}</p>
             <p className="text-xs text-muted-foreground mt-1">You'll receive a confirmation email shortly.</p>
           </div>
           <div className="flex gap-3 justify-center">
@@ -82,7 +94,6 @@ export default function CartPage() {
           <Link to="/search"><Button size="lg" className="shadow-md shadow-primary/20">Start Shopping <ArrowRight className="w-4 h-4 ml-1" /></Button></Link>
         </div>
 
-        {/* Suggested products */}
         <div>
           <h2 className="font-display font-bold text-lg mb-4">You Might Like</h2>
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
@@ -104,14 +115,12 @@ export default function CartPage() {
 
   return (
     <div className="container-main py-8">
-      {/* Breadcrumb */}
       <div className="flex items-center gap-1.5 text-xs text-muted-foreground mb-6">
         <Link to="/" className="hover:text-primary transition">Home</Link>
         <ChevronRight className="w-3 h-3" />
         <span className="text-foreground font-medium">{step === 'cart' ? 'Shopping Cart' : 'Checkout'}</span>
       </div>
 
-      {/* Progress indicator */}
       <div className="flex items-center gap-2 mb-8">
         {['Cart', 'Checkout', 'Confirmation'].map((label, i) => (
           <div key={label} className="flex items-center gap-2">
@@ -139,8 +148,12 @@ export default function CartPage() {
                 <div className="divide-y">
                   {items.map(item => (
                     <div key={item.id} className="p-4 sm:p-5 flex items-center gap-4">
-                      <div className="w-16 h-16 sm:w-20 sm:h-20 bg-secondary/50 rounded-lg shrink-0 flex items-center justify-center">
-                        <Package className="w-6 h-6 text-muted-foreground/20" />
+                      <div className="w-16 h-16 sm:w-20 sm:h-20 bg-secondary/50 rounded-lg shrink-0 flex items-center justify-center overflow-hidden">
+                        {item.productImage ? (
+                          <img src={item.productImage} alt={item.productName} className="w-full h-full object-cover" />
+                        ) : (
+                          <Package className="w-6 h-6 text-muted-foreground/20" />
+                        )}
                       </div>
                       <div className="flex-1 min-w-0">
                         <p className="font-medium text-sm truncate">{item.productName}</p>
@@ -225,7 +238,10 @@ export default function CartPage() {
             </Button>
           ) : (
             <div className="space-y-2 mt-5">
-              <Button className="w-full h-12 text-sm font-semibold shadow-md shadow-primary/20" type="submit" form="checkout-form">Place Order</Button>
+              <Button className="w-full h-12 text-sm font-semibold shadow-md shadow-primary/20" type="submit" form="checkout-form" disabled={orderLoading}>
+                {orderLoading && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+                Place Order
+              </Button>
               <Button variant="outline" className="w-full" onClick={() => setStep('cart')}>← Back to Cart</Button>
             </div>
           )}
@@ -235,4 +251,3 @@ export default function CartPage() {
     </div>
   );
 }
-
