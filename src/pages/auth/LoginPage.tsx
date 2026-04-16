@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -26,6 +26,9 @@ export default function LoginPage() {
   const { signIn, resetPassword } = useAuth();
   const { user, isAuthenticated } = useStore();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const roleParam = searchParams.get('role');
+  const isSeller = roleParam === 'seller';
 
   const { register, handleSubmit, formState: { errors } } = useForm<LoginForm>({
     resolver: zodResolver(loginSchema),
@@ -74,7 +77,7 @@ export default function LoginPage() {
             <span className="font-display font-bold text-xl">Tha Buyer</span>
           </Link>
           <h1 className="font-display text-2xl font-bold">Welcome Back</h1>
-          <p className="text-sm text-muted-foreground mt-1">Login to your account</p>
+          <p className="text-sm text-muted-foreground mt-1">{isSeller ? 'Login to your seller account' : 'Login to your account'}</p>
         </div>
 
         {forgotMode ? (
@@ -101,7 +104,7 @@ export default function LoginPage() {
               {loading && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}Login
             </Button>
 
-            <p className="text-center text-sm text-muted-foreground">Don't have an account? <Link to="/auth/signup" className="text-primary font-medium hover:underline">Sign Up</Link></p>
+            <p className="text-center text-sm text-muted-foreground">Don't have an account? <Link to={`/auth/signup${isSeller ? '?role=seller' : ''}`} className="text-primary font-medium hover:underline">Sign Up</Link></p>
           </form>
         )}
       </div>

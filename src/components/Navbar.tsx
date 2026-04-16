@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Search, ShoppingCart, Menu, X, User, LogOut, ChevronDown, Heart, Grid3X3, Smartphone, Shirt, Home, Dumbbell, Sparkles, Gamepad2 } from 'lucide-react';
+import { Search, ShoppingCart, Menu, X, User, LogOut, ChevronDown, Heart, Grid3X3, Smartphone, Shirt, Home, Dumbbell, Sparkles, Gamepad2, Store } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useStore } from '@/store/useStore';
 import { useAuth } from '@/hooks/useAuth';
@@ -27,14 +27,17 @@ export function Navbar() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [megaOpen, setMegaOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
+  const [signInOpen, setSignInOpen] = useState(false);
   const { isAuthenticated, user, cart, searchQuery, setSearchQuery } = useStore();
   const { signOut } = useAuth();
   const navigate = useNavigate();
   const megaRef = useRef<HTMLDivElement>(null);
+  const signInRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const handler = (e: MouseEvent) => {
       if (megaRef.current && !megaRef.current.contains(e.target as Node)) setMegaOpen(false);
+      if (signInRef.current && !signInRef.current.contains(e.target as Node)) setSignInOpen(false);
     };
     document.addEventListener('mousedown', handler);
     return () => document.removeEventListener('mousedown', handler);
@@ -156,10 +159,42 @@ export function Navbar() {
                   </Button>
                 </div>
               ) : (
-                <div className="hidden sm:flex items-center">
-                  <Link to="/auth/login">
-                    <Button variant="ghost" size="sm" className="text-xs h-10 text-[hsl(var(--background))] hover:bg-white/10">Sign In</Button>
-                  </Link>
+                <div className="hidden sm:flex items-center relative" ref={signInRef}>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setSignInOpen(!signInOpen)}
+                    className="text-xs h-10 gap-1 text-[hsl(var(--background))] hover:bg-white/10"
+                  >
+                    Sign In
+                    <ChevronDown className={`w-3.5 h-3.5 transition-transform ${signInOpen ? 'rotate-180' : ''}`} />
+                  </Button>
+                  {signInOpen && (
+                    <div className="absolute top-full right-0 mt-2 w-48 bg-card text-foreground border rounded-xl shadow-2xl py-2 z-50 animate-fade-in">
+                      <Link
+                        to="/auth/login?role=buyer"
+                        onClick={() => setSignInOpen(false)}
+                        className="flex items-center gap-3 px-4 py-2.5 hover:bg-secondary transition text-sm"
+                      >
+                        <User className="w-4 h-4 text-primary" />
+                        <div>
+                          <p className="font-medium">User</p>
+                          <p className="text-[10px] text-muted-foreground">Shop & compare prices</p>
+                        </div>
+                      </Link>
+                      <Link
+                        to="/auth/login?role=seller"
+                        onClick={() => setSignInOpen(false)}
+                        className="flex items-center gap-3 px-4 py-2.5 hover:bg-secondary transition text-sm"
+                      >
+                        <Store className="w-4 h-4 text-accent" />
+                        <div>
+                          <p className="font-medium">Seller</p>
+                          <p className="text-[10px] text-muted-foreground">Manage your store</p>
+                        </div>
+                      </Link>
+                    </div>
+                  )}
                 </div>
               )}
 
