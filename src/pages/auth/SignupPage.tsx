@@ -93,13 +93,21 @@ export default function SignupPage() {
           <p className="text-sm text-muted-foreground mt-1">Join Tha Buyer today</p>
         </div>
 
-        <div className="flex rounded-lg border p-1 mb-6 bg-secondary/50">
-          {(['buyer', 'seller'] as const).map(r => (
-            <button key={r} onClick={() => { setRole(r); reset(); }}
-              className={`flex-1 py-2 text-sm font-medium rounded-md transition ${role === r ? 'bg-card shadow-sm' : 'text-muted-foreground'}`}>
-              {r === 'buyer' ? '🛒 Buyer' : '🏪 Seller'}
-            </button>
-          ))}
+        <div className={`flex items-center gap-2 mb-6 px-4 py-2.5 rounded-lg border ${role === 'seller' ? 'bg-accent/10 border-accent/30 text-accent-foreground' : 'bg-primary/10 border-primary/30'}`}>
+          <span className="text-lg">{role === 'seller' ? '🏪' : '🛒'}</span>
+          <div className="flex-1">
+            <p className="text-sm font-semibold">{role === 'seller' ? 'Seller Registration' : 'Buyer Registration'}</p>
+            <p className="text-[11px] text-muted-foreground">
+              {role === 'seller' ? 'Open your store on Tha Buyer' : 'Shop and compare prices'}
+            </p>
+          </div>
+          <Link
+            to={role === 'seller' ? '/auth/signup?role=buyer' : '/auth/signup?role=seller'}
+            onClick={() => { setRole(role === 'seller' ? 'buyer' : 'seller'); reset(); }}
+            className="text-xs text-primary hover:underline font-medium"
+          >
+            Switch to {role === 'seller' ? 'Buyer' : 'Seller'}
+          </Link>
         </div>
 
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
