@@ -115,6 +115,42 @@ export default function SignupPage() {
           </Link>
         </div>
 
+        {role === 'seller' && (
+          <div className="mb-6 p-4 rounded-lg bg-accent/5 border border-accent/20">
+            <h3 className="font-semibold text-sm mb-3 text-accent-foreground">Why sell on Tha Buyer?</h3>
+            <div className="space-y-2.5">
+              <div className="flex items-start gap-2.5">
+                <span className="text-accent mt-0.5">✓</span>
+                <div className="flex-1">
+                  <p className="text-sm font-medium">Zero setup fee</p>
+                  <p className="text-xs text-muted-foreground">Start selling immediately at no cost</p>
+                </div>
+              </div>
+              <div className="flex items-start gap-2.5">
+                <span className="text-accent mt-0.5">✓</span>
+                <div className="flex-1">
+                  <p className="text-sm font-medium">Reach 10,000+ active buyers</p>
+                  <p className="text-xs text-muted-foreground">Connect with customers across the platform</p>
+                </div>
+              </div>
+              <div className="flex items-start gap-2.5">
+                <span className="text-accent mt-0.5">✓</span>
+                <div className="flex-1">
+                  <p className="text-sm font-medium">10% commission per sale</p>
+                  <p className="text-xs text-muted-foreground">Only pay when you make a sale</p>
+                </div>
+              </div>
+              <div className="flex items-start gap-2.5">
+                <span className="text-accent mt-0.5">✓</span>
+                <div className="flex-1">
+                  <p className="text-sm font-medium">Easy store management</p>
+                  <p className="text-xs text-muted-foreground">Intuitive dashboard to manage inventory and orders</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
           <div><Label htmlFor="fullName">Full Name</Label><Input id="fullName" {...register('fullName')} />{errors.fullName && <p className="text-xs text-destructive mt-1">{errors.fullName.message}</p>}</div>
           <div><Label htmlFor="email">Email</Label><Input id="email" type="email" {...register('email')} />{errors.email && <p className="text-xs text-destructive mt-1">{errors.email.message}</p>}</div>
