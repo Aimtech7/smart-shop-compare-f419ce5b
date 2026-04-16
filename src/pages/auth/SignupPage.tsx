@@ -35,6 +35,11 @@ export default function SignupPage() {
   const [searchParams] = useSearchParams();
   const defaultRole = searchParams.get('role') === 'seller' ? 'seller' : 'buyer';
   const [role, setRole] = useState<'buyer' | 'seller'>(defaultRole);
+
+  useEffect(() => {
+    const r = searchParams.get('role') === 'seller' ? 'seller' : 'buyer';
+    setRole(r);
+  }, [searchParams]);
   const [loading, setLoading] = useState(false);
   const [showVerification, setShowVerification] = useState(false);
   const { signUp } = useAuth();
