@@ -166,13 +166,13 @@ export function Navbar() {
                     onClick={() => setSignInOpen(!signInOpen)}
                     className="text-xs h-10 gap-1 text-[hsl(var(--background))] hover:bg-white/10"
                   >
-                    Sign In
+                    Sign Up
                     <ChevronDown className={`w-3.5 h-3.5 transition-transform ${signInOpen ? 'rotate-180' : ''}`} />
                   </Button>
                   {signInOpen && (
                     <div className="absolute top-full right-0 mt-2 w-48 bg-card text-foreground border rounded-xl shadow-2xl py-2 z-50 animate-fade-in">
                       <Link
-                        to="/auth/login?role=buyer"
+                        to="/auth/signup?role=buyer"
                         onClick={() => setSignInOpen(false)}
                         className="flex items-center gap-3 px-4 py-2.5 hover:bg-secondary transition text-sm"
                       >
@@ -183,16 +183,25 @@ export function Navbar() {
                         </div>
                       </Link>
                       <Link
-                        to="/auth/login?role=seller"
+                        to="/auth/signup?role=seller"
                         onClick={() => setSignInOpen(false)}
                         className="flex items-center gap-3 px-4 py-2.5 hover:bg-secondary transition text-sm"
                       >
                         <Store className="w-4 h-4 text-accent" />
                         <div>
                           <p className="font-medium">Seller</p>
-                          <p className="text-[10px] text-muted-foreground">Manage your store</p>
+                          <p className="text-[10px] text-muted-foreground">Open your store</p>
                         </div>
                       </Link>
+                      <div className="border-t mt-1 pt-1">
+                        <Link
+                          to="/auth/login"
+                          onClick={() => setSignInOpen(false)}
+                          className="block px-4 py-2 text-xs text-muted-foreground hover:text-foreground hover:bg-secondary transition"
+                        >
+                          Already have an account? <span className="text-primary font-medium">Sign In</span>
+                        </Link>
+                      </div>
                     </div>
                   )}
                 </div>
