@@ -9,7 +9,7 @@ import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
-import { Loader2 } from 'lucide-react';
+import { Loader2, CheckCircle2 } from 'lucide-react';
 import logo from '@/assets/logo.jpg';
 import type { UserRole } from '@/types';
 
@@ -120,28 +120,28 @@ export default function SignupPage() {
             <h3 className="font-semibold text-sm mb-3 text-accent-foreground">Why sell on Tha Buyer?</h3>
             <div className="space-y-2.5">
               <div className="flex items-start gap-2.5">
-                <span className="text-accent mt-0.5">✓</span>
+                <CheckCircle2 className="w-4 h-4 text-accent mt-0.5 flex-shrink-0" />
                 <div className="flex-1">
                   <p className="text-sm font-medium">Zero setup fee</p>
                   <p className="text-xs text-muted-foreground">Start selling immediately at no cost</p>
                 </div>
               </div>
               <div className="flex items-start gap-2.5">
-                <span className="text-accent mt-0.5">✓</span>
+                <CheckCircle2 className="w-4 h-4 text-accent mt-0.5 flex-shrink-0" />
                 <div className="flex-1">
                   <p className="text-sm font-medium">Reach 10,000+ active buyers</p>
                   <p className="text-xs text-muted-foreground">Connect with customers across the platform</p>
                 </div>
               </div>
               <div className="flex items-start gap-2.5">
-                <span className="text-accent mt-0.5">✓</span>
+                <CheckCircle2 className="w-4 h-4 text-accent mt-0.5 flex-shrink-0" />
                 <div className="flex-1">
                   <p className="text-sm font-medium">10% commission per sale</p>
                   <p className="text-xs text-muted-foreground">Only pay when you make a sale</p>
                 </div>
               </div>
               <div className="flex items-start gap-2.5">
-                <span className="text-accent mt-0.5">✓</span>
+                <CheckCircle2 className="w-4 h-4 text-accent mt-0.5 flex-shrink-0" />
                 <div className="flex-1">
                   <p className="text-sm font-medium">Easy store management</p>
                   <p className="text-xs text-muted-foreground">Intuitive dashboard to manage inventory and orders</p>
