@@ -8,6 +8,7 @@ import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
+import { ApiModeBadge } from "@/components/ApiModeBadge";
 import { useAuth } from "@/hooks/useAuth";
 
 const LandingPage = lazy(() => import("./pages/LandingPage"));
@@ -60,6 +61,7 @@ function AppContent() {
         </Suspense>
       </ErrorBoundary>
       <Footer />
+      <ApiModeBadge />
     </>
   );
 }
