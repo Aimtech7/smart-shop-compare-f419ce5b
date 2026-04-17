@@ -1,12 +1,9 @@
-// API configuration — switch between mock and real backend
+// API configuration — switch between mock and Django backend.
+// Toggle via VITE_USE_DJANGO_API=true and VITE_API_BASE_URL=http://localhost:8000/api
 export const API_CONFIG = {
-  // When connecting to a real backend, set VITE_API_BASE_URL in .env
-  baseUrl: import.meta.env.VITE_API_BASE_URL || '',
-  // When true, uses mock data; set to false when real backend is ready
-  useMock: !import.meta.env.VITE_API_BASE_URL,
-  // Supabase config (for future use)
-  supabaseUrl: import.meta.env.VITE_SUPABASE_URL || '',
-  supabaseAnonKey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY || '',
+  baseUrl: import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api',
+  useDjango: import.meta.env.VITE_USE_DJANGO_API === 'true',
+  useMock: import.meta.env.VITE_USE_DJANGO_API !== 'true',
 };
 
 // Generic fetch wrapper for future real API calls
