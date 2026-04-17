@@ -22,8 +22,11 @@ function toQuery(params?: Record<string, unknown>) {
 
 export const djangoProducts = {
   list: (params?: ProductListParams) =>
-    http.get<Product[]>(`/products/${toQuery(params as Record<string, unknown>)}`),
-  get: (id: string) => http.get<Product>(`/products/${id}/`),
+    http.get<(Product & { listings: StoreListing[] })[]>(
+      `/products/${toQuery(params as Record<string, unknown>)}`
+    ),
+  get: (id: string) =>
+    http.get<Product & { listings: StoreListing[] }>(`/products/${id}/`),
   listings: (productId: string) =>
     http.get<StoreListing[]>(`/products/${productId}/listings/`),
   reviews: (productId: string) =>
