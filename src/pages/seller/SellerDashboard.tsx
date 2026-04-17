@@ -11,6 +11,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { BulkUploadDialog } from '@/components/BulkUploadDialog';
 import { api } from '@/services/api';
+import { djangoSeller } from '@/services/django';
+import { DJANGO_CONFIG } from '@/services/django/client';
 import { toast } from 'sonner';
 import { generateProductCode, CATEGORIES, MAKES, TYPES } from '@/lib/productCode';
 import type { Product, StoreListing } from '@/types';
@@ -65,11 +67,42 @@ export default function SellerDashboard() {
   }, [watchCategory, watchMake, watchType, watchModel, watchSpecs]);
 
   useEffect(() => {
-    Promise.all([api.getSellerProducts('s1'), api.getSellerMetrics()]).then(([p, m]) => {
-      setProducts(p);
-      setMetrics(m);
-      setLoading(false);
-    });
+    const load = async () => {
+      try {
+        if (DJANGO_CONFIG.enabled) {
+          const [p, d] = await Promise.all([
+            djangoSeller.products(),
+            djangoSeller.dashboard(),
+          ]);
+          // Adapt Django products to UI shape (attach empty listings if backend doesn't include them)
+          setProducts(
+            (p as any[]).map((prod) => ({
+              ...prod,
+              listings: (prod as any).listings ?? [],
+            })) as (Product & { listings: StoreListing[] })[]
+          );
+          setMetrics({
+            totalProducts: d.totalProducts ?? 0,
+            totalOrders: d.totalOrders ?? 0,
+            revenue: d.revenue ?? 0,
+            pendingOrders: d.pendingOrders ?? 0,
+          });
+        } else {
+          const [p, m] = await Promise.all([
+            api.getSellerProducts('s1'),
+            api.getSellerMetrics(),
+          ]);
+          setProducts(p);
+          setMetrics(m);
+        }
+      } catch (err) {
+        console.error('Failed to load seller dashboard:', err);
+        toast.error('Failed to load dashboard data');
+      } finally {
+        setLoading(false);
+      }
+    };
+    load();
   }, []);
 
   const copyCode = () => {
