@@ -26,7 +26,6 @@ const buyerSchema = z.object(baseFields).refine(d => d.password === d.confirmPas
 const sellerSchema = z.object({
   ...baseFields,
   businessName: z.string().min(2, 'Business name required').max(255),
-  commissionAccepted: z.literal(true, { errorMap: () => ({ message: 'You must accept the commission policy' }) }),
 }).refine(d => d.password === d.confirmPassword, { message: "Passwords don't match", path: ['confirmPassword'] });
 
 type SellerForm = z.infer<typeof sellerSchema>;
@@ -161,15 +160,6 @@ export default function SignupPage() {
           <div><Label htmlFor="password">Password</Label><Input id="password" type="password" {...register('password')} />{errors.password && <p className="text-xs text-destructive mt-1">{errors.password.message}</p>}</div>
           <div><Label htmlFor="confirmPassword">Confirm Password</Label><Input id="confirmPassword" type="password" {...register('confirmPassword')} />{errors.confirmPassword && <p className="text-xs text-destructive mt-1">{errors.confirmPassword.message}</p>}</div>
 
-          {role === 'seller' && (
-            <div className="flex items-start gap-2">
-              <Checkbox id="commission" {...register('commissionAccepted')} onCheckedChange={() => {}} />
-              <div>
-                <label htmlFor="commission" className="text-sm">I accept the <a href="#" className="text-primary underline">Commission Policy</a> (10% per transaction)</label>
-                {errors.commissionAccepted && <p className="text-xs text-destructive mt-1">{errors.commissionAccepted.message}</p>}
-              </div>
-            </div>
-          )}
 
           <Button type="submit" className="w-full" disabled={loading}>
             {loading && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}

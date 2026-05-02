@@ -49,7 +49,15 @@ export function useAuth() {
     businessName?: string;
   }) => {
     if (useDjango) {
-      const { user } = await djangoAuth.register(data);
+      const { user } = await djangoAuth.register({
+        email: data.email,
+        password: data.password,
+        password_confirm: data.password,
+        name: data.fullName,
+        phone: data.phone,
+        role: data.role,
+        business_name: data.businessName,
+      });
       setUser(user);
       return { user };
     }

@@ -42,9 +42,13 @@ interface FetchOpts {
  *  - throws ApiError on non-2xx with parsed payload
  *  - dispatches a window 'auth:unauthorized' event on 401 so the app can react
  */
+let isRefreshing = false;
+let refreshPromise: Promise<boolean> | null = null;
+
 export async function apiFetch<T = unknown>(
   endpoint: string,
-  opts: FetchOpts = {}
+  opts: FetchOpts = {},
+  isRetry = false
 ): Promise<T> {
   const { method = 'GET', body, headers = {}, signal, withCredentials = true } = opts;
 
@@ -75,18 +79,40 @@ export async function apiFetch<T = unknown>(
   // Empty 204 / no-content
   if (res.status === 204) return undefined as T;
 
-  const contentType = res.headers.get('content-type') || '';
-  const data = contentType.includes('application/json')
-    ? await res.json().catch(() => null)
-    : await res.text().catch(() => null);
-
   if (!res.ok) {
-    if (res.status === 401) {
+    if (res.status === 401 && !isRetry && !endpoint.includes('/auth/login') && !endpoint.includes('/auth/token/refresh')) {
+      if (!isRefreshing) {
+        isRefreshing = true;
+        refreshPromise = fetch(`${DJANGO_CONFIG.baseUrl}/auth/token/refresh/`, {
+          method: 'POST',
+          credentials: 'include'
+        }).then(r => {
+          isRefreshing = false;
+          return r.ok;
+        }).catch(() => {
+          isRefreshing = false;
+          return false;
+        });
+      }
+      const success = await refreshPromise;
+      if (success) {
+        return apiFetch<T>(endpoint, opts, true);
+      } else {
+        window.dispatchEvent(new CustomEvent('auth:unauthorized'));
+      }
+    } else if (res.status === 401 && !endpoint.includes('/auth/token/refresh')) {
       window.dispatchEvent(new CustomEvent('auth:unauthorized'));
     }
+
     if (res.status === 403) {
       window.dispatchEvent(new CustomEvent('auth:forbidden'));
     }
+
+    const contentType = res.headers.get('content-type') || '';
+    const data = contentType.includes('application/json')
+      ? await res.json().catch(() => null)
+      : await res.text().catch(() => null);
+
     const message =
       (data && typeof data === 'object' && (data as any).detail) ||
       (data && typeof data === 'object' && (data as any).message) ||
@@ -94,6 +120,11 @@ export async function apiFetch<T = unknown>(
       `Request failed with status ${res.status}`;
     throw new ApiError(res.status, message, data);
   }
+
+  const contentType = res.headers.get('content-type') || '';
+  const data = contentType.includes('application/json')
+    ? await res.json().catch(() => null)
+    : await res.text().catch(() => null);
 
   return data as T;
 }

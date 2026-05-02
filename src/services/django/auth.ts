@@ -14,10 +14,11 @@ export interface LoginPayload { email: string; password: string }
 export interface RegisterPayload {
   email: string;
   password: string;
-  fullName: string;
+  password_confirm: string;
+  name: string;
   phone: string;
   role: UserRole;
-  businessName?: string;
+  business_name?: string;
 }
 
 export const djangoAuth = {
