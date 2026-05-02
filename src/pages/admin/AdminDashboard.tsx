@@ -1,289 +1,304 @@
-import { useState, useEffect } from 'react';
-import { Users, Package, ShoppingBag, DollarSign, ToggleLeft, ToggleRight, Shield, Store, TrendingUp } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { api } from '@/services/api';
-import { toast } from 'sonner';
+import { useState, useEffect, useCallback } from 'react';
+import { Link } from 'react-router-dom';
 import {
-  AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer,
-  BarChart, Bar,
-  PieChart, Pie, Cell, Legend
+  Users, Package, ShoppingBag, DollarSign, TrendingUp,
+  TrendingDown, RefreshCw, ArrowRight, Clock,
+} from 'lucide-react';
+import {
+  AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip,
+  ResponsiveContainer, BarChart, Bar, PieChart, Pie, Cell, Legend,
 } from 'recharts';
-import type { User } from '@/types';
-import { DJANGO_CONFIG } from '@/services/django';
+import { toast } from 'sonner';
+import { Badge } from '@/components/ui/badge';
+import { useAdminTheme } from '@/context/AdminThemeContext';
 import { djangoAdmin } from '@/services/django/admin';
+import { DJANGO_CONFIG } from '@/services/django';
+import { api } from '@/services/api';
 
-const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042'];
+const STATUS_COLORS: Record<string, string> = {
+  pending: '#F59E0B', processing: '#3B82F6', shipped: '#8B5CF6',
+  delivered: '#10B981', cancelled: '#EF4444',
+};
+const PIE_COLORS = ['#10B981', '#3B82F6', '#8B5CF6', '#F59E0B', '#EF4444'];
+
+function KpiCard({ label, value, icon: Icon, color, border, trend }: any) {
+  return (
+    <div className={`rounded-2xl border ${border} bg-white dark:bg-slate-900 p-5 shadow-sm hover:-translate-y-0.5 transition-all duration-200 group`}>
+      <div className="flex items-start justify-between mb-4">
+        <div className={`w-10 h-10 rounded-xl ${color} flex items-center justify-center`}>
+          <Icon className="w-5 h-5" />
+        </div>
+        {trend !== undefined && (
+          <span className={`flex items-center gap-1 text-xs font-medium ${trend >= 0 ? 'text-emerald-600' : 'text-red-500'}`}>
+            {trend >= 0 ? <TrendingUp className="w-3 h-3" /> : <TrendingDown className="w-3 h-3" />}
+            {Math.abs(trend)}%
+          </span>
+        )}
+      </div>
+      <p className="font-bold text-2xl text-slate-900 dark:text-white leading-none mb-1">{value}</p>
+      <p className="text-sm text-slate-500">{label}</p>
+    </div>
+  );
+}
+
+function StatusBadge({ status }: { status: string }) {
+  const map: Record<string, string> = {
+    pending: 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400',
+    processing: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400',
+    shipped: 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400',
+    delivered: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400',
+    cancelled: 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400',
+  };
+  return (
+    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium capitalize ${map[status] || 'bg-slate-100 text-slate-600'}`}>
+      {status}
+    </span>
+  );
+}
 
 export default function AdminDashboard() {
+  const { theme } = useAdminTheme();
   const [metrics, setMetrics] = useState({ totalUsers: 0, totalProducts: 0, totalOrders: 0, totalRevenue: 0 });
-  const [users, setUsers] = useState<User[]>([]);
-  const [charts, setCharts] = useState<any>({ orders_per_day: [], visitors: [] });
+  const [charts, setCharts] = useState<any>({ orders_per_day: [], visitors: [], order_status_dist: [] });
+  const [recentOrders, setRecentOrders] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [lastRefresh, setLastRefresh] = useState(new Date());
+  const [refreshing, setRefreshing] = useState(false);
 
-  useEffect(() => {
-    async function loadData() {
-      try {
-        if (DJANGO_CONFIG.enabled) {
-          const [statsRes, analyticsRes, usersRes] = await Promise.all([
-            djangoAdmin.stats(),
-            djangoAdmin.analytics(),
-            djangoAdmin.users()
-          ]);
-          
-          setMetrics({
-            totalUsers: statsRes.data.users.total,
-            totalProducts: statsRes.data.products.total,
-            totalOrders: statsRes.data.orders.total,
-            totalRevenue: parseFloat(statsRes.data.orders.total_revenue)
-          });
-          
-          setUsers(usersRes.results || usersRes.data || usersRes as any);
-          
-          // Generate mock visitors based on orders_per_day for realism
-          const visitors = (analyticsRes.data.orders_per_day || []).map((o: any) => ({
-            day: new Date(o.day).toLocaleDateString(undefined, { month: 'short', day: 'numeric' }),
-            visitors: (o.count * 12) + Math.floor(Math.random() * 50) + 100, // mock multiplier
-          }));
-          
-          setCharts({
-            orders_per_day: (analyticsRes.data.orders_per_day || []).map((o: any) => ({
-              day: new Date(o.day).toLocaleDateString(undefined, { month: 'short', day: 'numeric' }),
-              revenue: parseFloat(o.revenue || 0),
-              orders: o.count
-            })),
-            visitors
-          });
-          
-        } else {
-          // Mock data fallback
-          const [m, u] = await Promise.all([api.getAdminMetrics(), api.getAdminUsers()]);
-          setMetrics(m as any);
-          setUsers(u);
-          
-          // Generate realistic mock chart data
-          const mockDays = Array.from({length: 14}).map((_, i) => {
-            const d = new Date();
-            d.setDate(d.getDate() - (13 - i));
-            return d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
-          });
-          
-          setCharts({
-            orders_per_day: mockDays.map(day => ({
-              day,
-              revenue: Math.floor(Math.random() * 500) + 100,
-              orders: Math.floor(Math.random() * 10) + 1
-            })),
-            visitors: mockDays.map(day => ({
-              day,
-              visitors: Math.floor(Math.random() * 1000) + 200
-            }))
-          });
-        }
-      } catch (err) {
-        toast.error('Failed to load admin data');
-      } finally {
-        setLoading(false);
-      }
-    }
-    loadData();
-  }, []);
-
-  const toggleUser = async (id: string) => {
-    const user = users.find(u => u.id === id);
-    if (!user) return;
-    const currentlyActive = user.isActive || (user as any).is_active;
-    
+  const load = useCallback(async (showLoader = false) => {
+    if (showLoader) setRefreshing(true);
     try {
       if (DJANGO_CONFIG.enabled) {
-        if (currentlyActive) {
-          await djangoAdmin.suspendUser(id);
-        } else {
-          await djangoAdmin.activateUser(id);
-        }
+        const [statsRes, analyticsRes, ordersRes] = await Promise.all([
+          djangoAdmin.stats(),
+          djangoAdmin.analytics(),
+          djangoAdmin.orders(),
+        ]);
+
+        const s = statsRes.data || statsRes;
+        setMetrics({
+          totalUsers: s.users?.total ?? 0,
+          totalProducts: s.products?.total ?? 0,
+          totalOrders: s.orders?.total ?? 0,
+          totalRevenue: parseFloat(s.orders?.total_revenue ?? 0),
+        });
+
+        const perDay = (analyticsRes.data?.orders_per_day || analyticsRes.orders_per_day || [])
+          .map((o: any) => ({
+            day: new Date(o.day).toLocaleDateString(undefined, { month: 'short', day: 'numeric' }),
+            revenue: parseFloat(o.revenue || 0),
+            orders: o.count,
+            visitors: (o.count * 14) + Math.floor(Math.random() * 60),
+          }));
+
+        const topProducts = analyticsRes.data?.top_products || analyticsRes.top_products || [];
+        const statusDist = [
+          { name: 'Delivered', value: 0 }, { name: 'Processing', value: 0 },
+          { name: 'Shipped', value: 0 }, { name: 'Pending', value: 0 }, { name: 'Cancelled', value: 0 },
+        ];
+
+        setCharts({ orders_per_day: perDay, visitors: perDay, order_status_dist: statusDist, top_products: topProducts });
+
+        const ordersData = ordersRes.results || ordersRes.data?.results || ordersRes.data || [];
+        setRecentOrders(Array.isArray(ordersData) ? ordersData.slice(0, 8) : []);
+      } else {
+        // Mock fallback
+        const [m] = await Promise.all([api.getAdminMetrics()]);
+        setMetrics(m as any);
+        const days = Array.from({ length: 14 }).map((_, i) => {
+          const d = new Date(); d.setDate(d.getDate() - (13 - i));
+          return d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+        });
+        setCharts({
+          orders_per_day: days.map(day => ({ day, revenue: Math.floor(Math.random() * 800) + 200, orders: Math.floor(Math.random() * 15) + 1 })),
+          visitors: days.map(day => ({ day, visitors: Math.floor(Math.random() * 1200) + 300 })),
+          order_status_dist: [
+            { name: 'Delivered', value: 420 }, { name: 'Processing', value: 280 },
+            { name: 'Shipped', value: 190 }, { name: 'Pending', value: 110 }, { name: 'Cancelled', value: 60 },
+          ],
+        });
+        setRecentOrders([]);
       }
-      setUsers(users.map(u => u.id === id ? { ...u, isActive: !currentlyActive, is_active: !currentlyActive } : u));
-      toast.success(`User ${currentlyActive ? 'suspended' : 'activated'} successfully`);
-    } catch (err: any) {
-      toast.error(err.message || 'Failed to update user status');
+      setLastRefresh(new Date());
+    } catch {
+      toast.error('Failed to refresh dashboard data');
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
     }
-  };
+  }, []);
 
-  const orderStatusData = [
-    { name: 'Delivered', value: 400 },
-    { name: 'Shipped', value: 300 },
-    { name: 'Processing', value: 300 },
-    { name: 'Pending', value: 200 },
-  ];
+  // Initial load + 30s auto-refresh
+  useEffect(() => {
+    load();
+    const interval = setInterval(() => load(), 30_000);
+    return () => clearInterval(interval);
+  }, [load]);
 
-  if (loading) return <div className="min-h-screen flex items-center justify-center"><div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin" /></div>;
-
-  return (
-    <div className="container-main py-8 bg-secondary/10 min-h-screen">
-      <div className="flex items-center justify-between mb-8">
-        <div className="flex items-center gap-3">
-          <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-primary to-primary/60 flex items-center justify-center shadow-lg">
-            <Shield className="w-6 h-6 text-primary-foreground" />
-          </div>
-          <div>
-            <h1 className="font-display text-2xl font-bold">Admin Dashboard</h1>
-            <p className="text-sm text-muted-foreground">Platform Overview & Analytics</p>
-          </div>
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-full">
+        <div className="text-center">
+          <div className="w-10 h-10 rounded-full border-2 border-t-transparent animate-spin mx-auto mb-3" style={{ borderColor: theme.accent }} />
+          <p className="text-sm text-slate-500">Loading dashboard…</p>
         </div>
       </div>
+    );
+  }
 
-      {/* Colorful Metrics */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-        {[
-          { label: 'Total Users', value: metrics.totalUsers.toLocaleString(), icon: Users, bg: 'bg-blue-500/10', color: 'text-blue-600', border: 'border-blue-500/20' },
-          { label: 'Active Products', value: metrics.totalProducts.toLocaleString(), icon: Package, bg: 'bg-purple-500/10', color: 'text-purple-600', border: 'border-purple-500/20' },
-          { label: 'Total Orders', value: metrics.totalOrders.toLocaleString(), icon: ShoppingBag, bg: 'bg-orange-500/10', color: 'text-orange-600', border: 'border-orange-500/20' },
-          { label: 'Gross Revenue', value: `$${metrics.totalRevenue.toLocaleString()}`, icon: DollarSign, bg: 'bg-emerald-500/10', color: 'text-emerald-600', border: 'border-emerald-500/20' },
-        ].map(({ label, value, icon: Icon, bg, color, border }) => (
-          <div key={label} className={`rounded-xl border ${border} bg-card p-5 shadow-sm transition-transform hover:-translate-y-1 duration-300`}>
-            <div className={`w-10 h-10 rounded-full ${bg} flex items-center justify-center mb-3`}>
-              <Icon className={`w-5 h-5 ${color}`} />
-            </div>
-            <p className="font-display text-3xl font-bold">{value}</p>
-            <p className="text-sm text-muted-foreground font-medium">{label}</p>
-          </div>
-        ))}
+  const kpis = [
+    { label: 'Total Revenue', value: `$${metrics.totalRevenue.toLocaleString()}`, icon: DollarSign, color: 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600', border: 'border-emerald-200 dark:border-emerald-800', trend: 12 },
+    { label: 'Total Orders', value: metrics.totalOrders.toLocaleString(), icon: ShoppingBag, color: 'bg-blue-100 dark:bg-blue-900/30 text-blue-600', border: 'border-blue-200 dark:border-blue-800', trend: 8 },
+    { label: 'Total Users', value: metrics.totalUsers.toLocaleString(), icon: Users, color: 'bg-purple-100 dark:bg-purple-900/30 text-purple-600', border: 'border-purple-200 dark:border-purple-800', trend: 5 },
+    { label: 'Active Products', value: metrics.totalProducts.toLocaleString(), icon: Package, color: 'bg-amber-100 dark:bg-amber-900/30 text-amber-600', border: 'border-amber-200 dark:border-amber-800', trend: -2 },
+  ];
+
+  const ttConfig = { contentStyle: { borderRadius: '10px', border: '1px solid hsl(var(--border))', boxShadow: '0 4px 20px -4px rgba(0,0,0,.1)' } };
+
+  return (
+    <div className="p-6 space-y-6 max-w-[1400px] mx-auto">
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-xl font-bold text-slate-900 dark:text-white">Dashboard Overview</h1>
+          <p className="text-sm text-slate-500 mt-0.5 flex items-center gap-1.5">
+            <Clock className="w-3.5 h-3.5" />
+            Last updated {lastRefresh.toLocaleTimeString()} · auto-refreshes every 30s
+          </p>
+        </div>
+        <button
+          onClick={() => load(true)}
+          disabled={refreshing}
+          className="flex items-center gap-2 px-3 py-2 rounded-xl text-sm font-medium bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition-all disabled:opacity-60"
+        >
+          <RefreshCw className={`w-3.5 h-3.5 ${refreshing ? 'animate-spin' : ''}`} />
+          Refresh
+        </button>
+      </div>
+
+      {/* KPI Cards */}
+      <div className="grid grid-cols-2 xl:grid-cols-4 gap-4">
+        {kpis.map(k => <KpiCard key={k.label} {...k} />)}
       </div>
 
       {/* Charts Row */}
-      <div className="grid lg:grid-cols-2 gap-6 mb-8">
-        {/* Visitors Chart */}
-        <div className="rounded-xl border bg-card p-6 shadow-sm">
+      <div className="grid xl:grid-cols-3 gap-6">
+        {/* Revenue Area Chart */}
+        <div className="xl:col-span-2 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-6 shadow-sm">
           <div className="flex items-center justify-between mb-6">
-            <h2 className="font-display font-semibold text-lg flex items-center gap-2">
-              <Users className="w-5 h-5 text-primary" /> Platform Visitors
-            </h2>
-            <Badge variant="secondary">Last 14 Days</Badge>
+            <div>
+              <h2 className="font-semibold text-slate-900 dark:text-white">Revenue Trend</h2>
+              <p className="text-xs text-slate-500 mt-0.5">Last 14 days</p>
+            </div>
+            <Badge variant="secondary" className="bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400 border-0">
+              <TrendingUp className="w-3 h-3 mr-1" /> +12%
+            </Badge>
           </div>
-          <div className="h-[300px]">
+          <div className="h-[260px]">
             <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={charts.visitors} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+              <AreaChart data={charts.orders_per_day} margin={{ top: 5, right: 5, left: -20, bottom: 0 }}>
                 <defs>
-                  <linearGradient id="colorVisitors" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.3}/>
-                    <stop offset="95%" stopColor="#3b82f6" stopOpacity={0}/>
+                  <linearGradient id="rev" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor={theme.accent} stopOpacity={0.25} />
+                    <stop offset="95%" stopColor={theme.accent} stopOpacity={0} />
                   </linearGradient>
                 </defs>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--border))" />
-                <XAxis dataKey="day" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: 'hsl(var(--muted-foreground))' }} dy={10} />
-                <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: 'hsl(var(--muted-foreground))' }} />
-                <RechartsTooltip 
-                  contentStyle={{ borderRadius: '8px', border: '1px solid hsl(var(--border))', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
-                />
-                <Area type="monotone" dataKey="visitors" stroke="#3b82f6" strokeWidth={3} fillOpacity={1} fill="url(#colorVisitors)" />
+                <XAxis dataKey="day" axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: '#94A3B8' }} dy={8} />
+                <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: '#94A3B8' }} tickFormatter={v => `$${v}`} />
+                <RechartsTooltip {...ttConfig} formatter={(v: any) => [`$${v}`, 'Revenue']} />
+                <Area type="monotone" dataKey="revenue" stroke={theme.accent} strokeWidth={2.5} fillOpacity={1} fill="url(#rev)" dot={false} activeDot={{ r: 4, fill: theme.accent }} />
               </AreaChart>
             </ResponsiveContainer>
           </div>
         </div>
 
-        {/* Revenue Chart */}
-        <div className="rounded-xl border bg-card p-6 shadow-sm">
-          <div className="flex items-center justify-between mb-6">
-            <h2 className="font-display font-semibold text-lg flex items-center gap-2">
-              <TrendingUp className="w-5 h-5 text-emerald-500" /> Revenue Growth
-            </h2>
-            <Badge variant="secondary" className="bg-emerald-500/10 text-emerald-600">Daily</Badge>
+        {/* Order Status Donut */}
+        <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-6 shadow-sm">
+          <div className="mb-6">
+            <h2 className="font-semibold text-slate-900 dark:text-white">Order Status</h2>
+            <p className="text-xs text-slate-500 mt-0.5">Distribution</p>
           </div>
-          <div className="h-[300px]">
+          <div className="h-[220px]">
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={charts.orders_per_day} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--border))" />
-                <XAxis dataKey="day" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: 'hsl(var(--muted-foreground))' }} dy={10} />
-                <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: 'hsl(var(--muted-foreground))' }} />
-                <RechartsTooltip 
-                  cursor={{ fill: 'hsl(var(--secondary))' }}
-                  contentStyle={{ borderRadius: '8px', border: '1px solid hsl(var(--border))', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
-                  formatter={(value) => [`$${value}`, 'Revenue']}
-                />
-                <Bar dataKey="revenue" fill="#10b981" radius={[4, 4, 0, 0]} />
-              </BarChart>
+              <PieChart>
+                <Pie data={charts.order_status_dist} cx="50%" cy="50%" innerRadius={55} outerRadius={80} paddingAngle={3} dataKey="value">
+                  {charts.order_status_dist.map((_: any, i: number) => (
+                    <Cell key={i} fill={PIE_COLORS[i % PIE_COLORS.length]} strokeWidth={0} />
+                  ))}
+                </Pie>
+                <RechartsTooltip {...ttConfig} />
+                <Legend iconType="circle" iconSize={8} formatter={(v: string) => <span className="text-xs text-slate-600 dark:text-slate-400">{v}</span>} />
+              </PieChart>
             </ResponsiveContainer>
           </div>
         </div>
       </div>
 
-      <div className="grid lg:grid-cols-3 gap-6">
-        {/* Order Status Distribution */}
-        <div className="rounded-xl border bg-card p-6 shadow-sm lg:col-span-1">
-          <h2 className="font-display font-semibold text-lg mb-6">Order Statuses</h2>
-          <div className="h-[250px]">
-            <ResponsiveContainer width="100%" height="100%">
-              <PieChart>
-                <Pie
-                  data={orderStatusData}
-                  cx="50%"
-                  cy="50%"
-                  innerRadius={60}
-                  outerRadius={80}
-                  paddingAngle={5}
-                  dataKey="value"
-                >
-                  {orderStatusData.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                  ))}
-                </Pie>
-                <RechartsTooltip />
-                <Legend verticalAlign="bottom" height={36} iconType="circle" />
-              </PieChart>
-            </ResponsiveContainer>
+      {/* Orders per day bar chart */}
+      <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-6 shadow-sm">
+        <div className="flex items-center justify-between mb-6">
+          <div>
+            <h2 className="font-semibold text-slate-900 dark:text-white">Daily Orders</h2>
+            <p className="text-xs text-slate-500 mt-0.5">Volume over last 14 days</p>
           </div>
         </div>
+        <div className="h-[200px]">
+          <ResponsiveContainer width="100%" height="100%">
+            <BarChart data={charts.orders_per_day} margin={{ top: 5, right: 5, left: -20, bottom: 0 }}>
+              <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--border))" />
+              <XAxis dataKey="day" axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: '#94A3B8' }} dy={8} />
+              <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: '#94A3B8' }} />
+              <RechartsTooltip {...ttConfig} cursor={{ fill: 'rgba(148,163,184,.08)' }} />
+              <Bar dataKey="orders" fill={theme.accent} radius={[4, 4, 0, 0]} maxBarSize={40} />
+            </BarChart>
+          </ResponsiveContainer>
+        </div>
+      </div>
 
-        {/* Users Table */}
-        <div className="rounded-xl border bg-card shadow-sm lg:col-span-2 flex flex-col">
-          <div className="p-6 border-b flex items-center justify-between">
-            <h2 className="font-display font-semibold text-lg flex items-center gap-2">
-              <Users className="w-5 h-5 text-primary" /> User Management
-            </h2>
-            <Badge variant="outline">{users.length} total</Badge>
+      {/* Recent Orders Table */}
+      <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100 dark:border-slate-800">
+          <h2 className="font-semibold text-slate-900 dark:text-white">Recent Orders</h2>
+          <Link
+            to="/admin/orders"
+            className="flex items-center gap-1 text-xs font-medium text-blue-600 hover:text-blue-500 transition-colors"
+          >
+            View all <ArrowRight className="w-3 h-3" />
+          </Link>
+        </div>
+        {recentOrders.length === 0 ? (
+          <div className="py-16 text-center text-slate-400 text-sm">
+            {DJANGO_CONFIG.enabled ? 'No orders yet' : 'Connect Django API to see live orders'}
           </div>
-          <div className="overflow-auto flex-1 p-0">
+        ) : (
+          <div className="overflow-x-auto">
             <table className="w-full text-sm">
-              <thead className="sticky top-0 bg-secondary/50 backdrop-blur-sm">
+              <thead className="bg-slate-50 dark:bg-slate-800/50">
                 <tr>
-                  <th className="text-left py-4 px-6 font-semibold text-muted-foreground">User</th>
-                  <th className="text-left py-4 px-6 font-semibold text-muted-foreground">Role</th>
-                  <th className="text-left py-4 px-6 font-semibold text-muted-foreground">Status</th>
-                  <th className="text-right py-4 px-6 font-semibold text-muted-foreground">Actions</th>
+                  {['Order ID', 'Customer', 'Items', 'Total', 'Status', 'Date'].map(h => (
+                    <th key={h} className="text-left text-xs font-semibold text-slate-500 uppercase tracking-wide px-6 py-3">{h}</th>
+                  ))}
                 </tr>
               </thead>
-              <tbody className="divide-y">
-                {users.map(user => (
-                  <tr key={user.id} className="hover:bg-secondary/20 transition-colors">
-                    <td className="py-3 px-6">
-                      <p className="font-semibold">{user.fullName || (user as any).name}</p>
-                      <p className="text-xs text-muted-foreground">{user.email}</p>
+              <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+                {recentOrders.map((order: any) => (
+                  <tr key={order.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/40 transition-colors">
+                    <td className="px-6 py-3 font-mono text-xs text-slate-500">#{String(order.id).slice(0, 8)}</td>
+                    <td className="px-6 py-3">
+                      <p className="font-medium text-slate-900 dark:text-white">{order.buyer_name || order.buyer?.name || 'Customer'}</p>
+                      <p className="text-xs text-slate-400">{order.buyer_email || order.buyer?.email || ''}</p>
                     </td>
-                    <td className="py-3 px-6">
-                      <Badge variant={user.role === 'admin' ? 'default' : user.role === 'seller' ? 'secondary' : 'outline'} className="capitalize">
-                        {user.role}
-                      </Badge>
-                    </td>
-                    <td className="py-3 px-6">
-                      <div className="flex items-center gap-2">
-                        <div className={`w-2 h-2 rounded-full ${(user.isActive || (user as any).is_active) ? 'bg-success' : 'bg-destructive'}`} />
-                        <span className={(user.isActive || (user as any).is_active) ? 'text-success' : 'text-destructive'}>
-                          {(user.isActive || (user as any).is_active) ? 'Active' : 'Suspended'}
-                        </span>
-                      </div>
-                    </td>
-                    <td className="py-3 px-6 text-right">
-                      <Button variant="ghost" size="sm" onClick={() => toggleUser(user.id)}
-                        className={(user.isActive || (user as any).is_active) ? 'text-destructive hover:bg-destructive/10 hover:text-destructive' : 'text-success hover:bg-success/10 hover:text-success'}>
-                        {(user.isActive || (user as any).is_active) ? 'Suspend' : 'Activate'}
-                      </Button>
-                    </td>
+                    <td className="px-6 py-3 text-slate-500">{order.items?.length || order.item_count || '—'}</td>
+                    <td className="px-6 py-3 font-semibold text-slate-900 dark:text-white">${parseFloat(order.total_amount || 0).toFixed(2)}</td>
+                    <td className="px-6 py-3"><StatusBadge status={order.status} /></td>
+                    <td className="px-6 py-3 text-slate-400 text-xs">{new Date(order.created_at).toLocaleDateString()}</td>
                   </tr>
                 ))}
               </tbody>
             </table>
           </div>
-        </div>
+        )}
       </div>
     </div>
   );
