@@ -1,5 +1,16 @@
 export type UserRole = 'buyer' | 'seller' | 'admin';
 
+export interface DeliveryAddress {
+  id: string;
+  street1: string;
+  street2?: string;
+  city: string;
+  state: string;
+  zip_code: string;
+  country: string;
+  is_default: boolean;
+}
+
 export interface User {
   id: string;
   fullName: string;
@@ -10,6 +21,7 @@ export interface User {
   isVerified: boolean;
   isActive: boolean;
   createdAt: string;
+  addresses?: DeliveryAddress[];
 }
 
 export interface SellerProfile {

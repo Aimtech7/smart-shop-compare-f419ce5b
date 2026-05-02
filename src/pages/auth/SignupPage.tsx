@@ -60,8 +60,8 @@ export default function SignupPage() {
         role: role as UserRole,
         businessName: data.businessName,
       });
-      setShowVerification(true);
-      toast.success('Account created! Please verify your email.');
+      toast.success('Account created and logged in!');
+      navigate('/');
     } catch (err: any) {
       toast.error(err?.message || 'Signup failed. Please try again.');
     } finally {

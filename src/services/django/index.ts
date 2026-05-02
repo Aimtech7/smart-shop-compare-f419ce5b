@@ -4,3 +4,4 @@ export { djangoProducts } from './products';
 export { djangoCart } from './cart';
 export { djangoOrders } from './orders';
 export { djangoSeller } from './seller';
+export { djangoAdmin } from './admin';

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -36,9 +36,24 @@ export default function CartPage() {
   const [orderId, setOrderId] = useState<string>('');
   const navigate = useNavigate();
 
-  const { register, handleSubmit, formState: { errors } } = useForm({
+  const { register, handleSubmit, setValue, formState: { errors } } = useForm({
     resolver: zodResolver(addressSchema),
   });
+
+  const hasAddress = Boolean(user?.addresses && user.addresses.length > 0);
+  const defaultAddress = hasAddress ? user?.addresses![0] : null;
+
+  useEffect(() => {
+    if (defaultAddress && user) {
+      setValue('fullName', user.fullName || '');
+      setValue('phone', user.phone || '');
+      setValue('street', defaultAddress.street1 || '');
+      setValue('city', defaultAddress.city || '');
+      setValue('state', defaultAddress.state || '');
+      setValue('zipCode', defaultAddress.zip_code || '');
+      setValue('country', defaultAddress.country || 'US');
+    }
+  }, [defaultAddress, user, setValue]);
 
   const groupedCart = getCartByStore();
   const total = getCartTotal();
@@ -188,15 +203,22 @@ export default function CartPage() {
           ) : (
             <form id="checkout-form" onSubmit={handleSubmit(onCheckout)} className="space-y-5">
               <div className="rounded-xl border bg-card p-6">
-                <h2 className="font-display font-semibold mb-4">Delivery Address</h2>
+                <div className="flex items-center justify-between mb-4">
+                  <h2 className="font-display font-semibold">Delivery Address</h2>
+                  {hasAddress && (
+                    <span className="text-[10px] text-muted-foreground bg-secondary/50 px-2 py-1 rounded">
+                      To change your address, visit Account Settings.
+                    </span>
+                  )}
+                </div>
                 <div className="grid sm:grid-cols-2 gap-4">
-                  <div><Label>Full Name</Label><Input {...register('fullName')} className="mt-1" />{errors.fullName && <p className="text-xs text-destructive mt-1">{errors.fullName.message as string}</p>}</div>
-                  <div><Label>Phone</Label><Input {...register('phone')} className="mt-1" />{errors.phone && <p className="text-xs text-destructive mt-1">{errors.phone.message as string}</p>}</div>
-                  <div className="sm:col-span-2"><Label>Street Address</Label><Input {...register('street')} className="mt-1" />{errors.street && <p className="text-xs text-destructive mt-1">{errors.street.message as string}</p>}</div>
-                  <div><Label>City</Label><Input {...register('city')} className="mt-1" /></div>
-                  <div><Label>State</Label><Input {...register('state')} className="mt-1" /></div>
-                  <div><Label>ZIP Code</Label><Input {...register('zipCode')} className="mt-1" /></div>
-                  <div><Label>Country</Label><Input {...register('country')} className="mt-1" /></div>
+                  <div><Label>Full Name</Label><Input {...register('fullName')} className="mt-1" disabled={hasAddress} />{errors.fullName && <p className="text-xs text-destructive mt-1">{errors.fullName.message as string}</p>}</div>
+                  <div><Label>Phone</Label><Input {...register('phone')} className="mt-1" disabled={hasAddress} />{errors.phone && <p className="text-xs text-destructive mt-1">{errors.phone.message as string}</p>}</div>
+                  <div className="sm:col-span-2"><Label>Street Address</Label><Input {...register('street')} className="mt-1" disabled={hasAddress} />{errors.street && <p className="text-xs text-destructive mt-1">{errors.street.message as string}</p>}</div>
+                  <div><Label>City</Label><Input {...register('city')} className="mt-1" disabled={hasAddress} /></div>
+                  <div><Label>State</Label><Input {...register('state')} className="mt-1" disabled={hasAddress} /></div>
+                  <div><Label>ZIP Code</Label><Input {...register('zipCode')} className="mt-1" disabled={hasAddress} /></div>
+                  <div><Label>Country</Label><Input {...register('country')} className="mt-1" disabled={hasAddress} /></div>
                 </div>
               </div>
 

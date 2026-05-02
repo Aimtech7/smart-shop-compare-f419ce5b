@@ -54,19 +54,21 @@ export async function apiFetch<T = unknown>(
 
   const url = `${DJANGO_CONFIG.baseUrl}${endpoint.startsWith('/') ? '' : '/'}${endpoint}`;
 
+  const isFormData = body instanceof FormData;
+
   const init: RequestInit = {
     method,
     signal,
     credentials: withCredentials ? 'include' : 'same-origin',
     headers: {
       Accept: 'application/json',
-      ...(body !== undefined ? { 'Content-Type': 'application/json' } : {}),
+      ...(!isFormData && body !== undefined ? { 'Content-Type': 'application/json' } : {}),
       ...headers,
     },
   };
 
   if (body !== undefined) {
-    init.body = typeof body === 'string' ? body : JSON.stringify(body);
+    init.body = isFormData ? (body as FormData) : (typeof body === 'string' ? body : JSON.stringify(body));
   }
 
   let res: Response;

@@ -1,0 +1,65 @@
+# Enhance Seller Dashboard, Supabase Image Uploads & Checkout Logic
+
+This plan outlines the steps to configure Supabase cloud storage for images, wire up the Seller Dashboard to the backend, and restrict checkout address changes.
+
+## User Review Required
+
+> [!IMPORTANT]
+> **Supabase Cloud Storage Credentials Required**
+> Because you want images to upload directly to Supabase, we need to install the `django-storages` package. However, you will need to create a Storage Bucket in Supabase and provide the keys to the backend. 
+> 
+> Please confirm you have created a public bucket in Supabase (e.g., named `media`) and have added the following to your `backend/thabuyer_backend/.env` file:
+> ```env
+> USE_S3=True
+> AWS_ACCESS_KEY_ID=your_supabase_s3_access_key
+> AWS_SECRET_ACCESS_KEY=your_supabase_s3_secret_key
+> AWS_STORAGE_BUCKET_NAME=your_bucket_name
+> AWS_S3_ENDPOINT_URL=https://<project-id>.supabase.co/storage/v1/s3
+> AWS_S3_REGION_NAME=your_region
+> ```
+> *Note: I will write the code to support this, but uploads will fail until you provide these keys in your `.env`.*
+
+## Open Questions
+
+> [!WARNING]
+> Do you currently have an "Account Settings" page built on the frontend where users can actually update their address? If not, making it read-only on checkout means they will be permanently stuck with the first address they provide until we build the Account Settings page! Should I also quickly scaffold an Account Settings page for them to edit their address?
+
+## Proposed Changes
+
+### Backend: S3 Storage & User Address
+
+#### [MODIFY] [settings.py](file:///c:/Users/aimtech/Desktop/THA%20BUYER/backend/thabuyer_backend/core/settings.py)
+- Install `django-storages` and `boto3`.
+- Configure `DEFAULT_FILE_STORAGE` to use `S3Boto3Storage` if `USE_S3=True` is found in the `.env` file.
+
+#### [MODIFY] [serializers.py](file:///c:/Users/aimtech/Desktop/THA%20BUYER/backend/thabuyer_backend/users/serializers.py)
+- Add a `UserAddressSerializer`.
+- Include `addresses` in the `UserSerializer` so the frontend knows if the user has an address saved.
+
+#### [MODIFY] [views.py](file:///c:/Users/aimtech/Desktop/THA%20BUYER/backend/thabuyer_backend/users/views.py)
+- Ensure that when an order is placed, if the user doesn't have a default address, the checkout payload saves the provided address to the `UserAddress` table.
+
+---
+
+### Frontend: Seller Dashboard & Checkout
+
+#### [MODIFY] [seller.ts](file:///c:/Users/aimtech/Desktop/THA%20BUYER/frontend/smart-shop-compare-f419ce5b/src/services/django/seller.ts)
+- Update `createProduct` and `updateProduct` to accept `FormData` instead of JSON so that images can be uploaded to the backend API.
+
+#### [MODIFY] [SellerDashboard.tsx](file:///c:/Users/aimtech/Desktop/THA%20BUYER/frontend/smart-shop-compare-f419ce5b/src/pages/seller/SellerDashboard.tsx)
+- Wire the `onSubmit` function to actually call the Django API (`djangoSeller.createProduct`) using `FormData` instead of just updating the local mock state.
+- Handle image file attachments in the form submission.
+
+#### [MODIFY] [CartPage.tsx](file:///c:/Users/aimtech/Desktop/THA%20BUYER/frontend/smart-shop-compare-f419ce5b/src/pages/CartPage.tsx)
+- Check if `user.addresses` exists.
+- If an address exists, pre-fill the form inputs and set them to `disabled` (read-only).
+- Display a small note: *"To change your delivery address, please visit your Account Settings."*
+
+## Verification Plan
+
+### Automated Tests
+- Run backend migrations and test if the S3 settings crash the server.
+
+### Manual Verification
+- Attempt to add a product with an image via the Seller Dashboard.
+- Verify the checkout form is editable on the first try, but read-only on subsequent checkouts.

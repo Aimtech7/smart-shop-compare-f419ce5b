@@ -17,6 +17,7 @@ import {
   djangoProducts,
   djangoCart,
   djangoOrders,
+  djangoAdmin,
 } from './django';
 import type {
   SearchFilters,
@@ -46,8 +47,8 @@ export const api = {
   getPriceHistory: (productId: string) => mockProducts_service.getPriceHistory(productId),
   getSellerProducts: (sellerId: string) => mockProducts_service.getSellerProducts(sellerId),
   getSellerMetrics: () => mockProducts_service.getSellerMetrics(),
-  getAdminMetrics: () => mockProducts_service.getAdminMetrics(),
-  getAdminUsers: () => mockProducts_service.getAdminUsers(),
+  getAdminMetrics: () => useDjango ? djangoAdmin.analytics() : mockProducts_service.getAdminMetrics(),
+  getAdminUsers: () => useDjango ? djangoAdmin.users() : mockProducts_service.getAdminUsers(),
 
   // ─── Pricing ─────────────────────────────────────────────────
   comparePrices: (productId: string) =>

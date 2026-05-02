@@ -21,12 +21,26 @@ export interface RegisterPayload {
   business_name?: string;
 }
 
-export const djangoAuth = {
-  login: (payload: LoginPayload) =>
-    http.post<{ user: User }>('/auth/login/', payload),
+export interface AuthResponse {
+  status: string;
+  message: string;
+  data: {
+    access: string;
+    refresh: string;
+    user: User;
+  }
+}
 
-  register: (payload: RegisterPayload) =>
-    http.post<{ user: User }>('/auth/register/', payload),
+export const djangoAuth = {
+  login: async (payload: LoginPayload) => {
+    const res = await http.post<AuthResponse>('/auth/login/', payload);
+    return { user: res.data.user };
+  },
+
+  register: async (payload: RegisterPayload) => {
+    const res = await http.post<AuthResponse>('/auth/register/', payload);
+    return { user: res.data.user };
+  },
 
   logout: () => http.post<void>('/auth/logout/'),
 

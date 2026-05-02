@@ -113,7 +113,7 @@ export default function SellerDashboard() {
     }
   };
 
-  const onSubmit = (data: ProductForm) => {
+  const onSubmit = async (data: ProductForm) => {
     const code = generateProductCode({
       category: data.category,
       make: data.make,
@@ -122,44 +122,111 @@ export default function SellerDashboard() {
       specs: data.specs,
     });
 
-    if (editingProduct) {
-      setProducts(products.map(p => p.id === editingProduct.id
-        ? { ...p, name: data.name, description: data.description, category: data.category, sku: code }
-        : p));
-      toast.success(`Product updated! Code: ${code}`);
-    } else {
-      const newProd: Product & { listings: StoreListing[] } = {
-        id: `p-${Date.now()}`,
-        name: data.name,
-        description: `${data.description}\n\nMake: ${data.make} | Type: ${data.type} | Model: ${data.model}${data.specs ? ` | Specs: ${data.specs}` : ''}`,
-        category: data.category,
-        images: [],
-        sku: code,
-        createdAt: new Date().toISOString(),
-        listings: [{
-          id: `l-${Date.now()}`, productId: `p-${Date.now()}`, sellerId: 's1',
-          storeName: 'My Store', price: Number(data.price), stock: Number(data.stock), sellerRating: 4.5,
-        }],
-      };
-      setProducts([newProd, ...products]);
-      toast.success(`Product added! Code: ${code}`);
+    const fullDescription = `${data.description}\n\nMake: ${data.make} | Type: ${data.type} | Model: ${data.model}${data.specs ? ` | Specs: ${data.specs}` : ''}`;
+
+    try {
+      if (DJANGO_CONFIG.enabled) {
+        const formData = new FormData();
+        formData.append('name', data.name);
+        formData.append('description', fullDescription);
+        formData.append('category', data.category);
+        formData.append('price', data.price);
+        formData.append('stock_qty', data.stock);
+        formData.append('SKU', code);
+        
+        const fileInput = document.getElementById('product-images') as HTMLInputElement;
+        if (fileInput && fileInput.files) {
+          for (let i = 0; i < fileInput.files.length; i++) {
+            formData.append('uploaded_images', fileInput.files[i]);
+          }
+        }
+
+        if (editingProduct) {
+          await djangoSeller.updateProduct(editingProduct.id, formData);
+          toast.success(`Product updated! Code: ${code}`);
+        } else {
+          await djangoSeller.createProduct(formData);
+          toast.success(`Product added! Code: ${code}`);
+        }
+        
+        // Refresh products
+        const [p, d] = await Promise.all([
+          djangoSeller.products(),
+          djangoSeller.dashboard(),
+        ]);
+        setProducts(
+          (p as any[]).map((prod) => ({
+            ...prod,
+            listings: (prod as any).listings ?? [],
+          })) as (Product & { listings: StoreListing[] })[]
+        );
+        setMetrics({
+          totalProducts: d.totalProducts ?? 0,
+          totalOrders: d.totalOrders ?? 0,
+          revenue: d.revenue ?? 0,
+          pendingOrders: d.pendingOrders ?? 0,
+        });
+      } else {
+        // Mock fallback
+        if (editingProduct) {
+          setProducts(products.map(p => p.id === editingProduct.id
+            ? { ...p, name: data.name, description: data.description, category: data.category, sku: code }
+            : p));
+          toast.success(`Product updated! Code: ${code}`);
+        } else {
+          const newProd: Product & { listings: StoreListing[] } = {
+            id: `p-${Date.now()}`,
+            name: data.name,
+            description: fullDescription,
+            category: data.category,
+            images: [],
+            sku: code,
+            createdAt: new Date().toISOString(),
+            listings: [{
+              id: `l-${Date.now()}`, productId: `p-${Date.now()}`, sellerId: 's1',
+              storeName: 'My Store', price: Number(data.price), stock: Number(data.stock), sellerRating: 4.5,
+            }],
+          };
+          setProducts([newProd, ...products]);
+          toast.success(`Product added! Code: ${code}`);
+        }
+      }
+      
+      setDialogOpen(false);
+      setEditingProduct(null);
+      reset();
+      setGeneratedCode('');
+    } catch (err: any) {
+      toast.error('Failed to save product: ' + (err.message || 'Unknown error'));
     }
-    setDialogOpen(false);
-    setEditingProduct(null);
-    reset();
-    setGeneratedCode('');
   };
 
-  const deleteProduct = (id: string) => {
-    setProducts(products.filter(p => p.id !== id));
-    toast.success('Product deleted');
+  const deleteProduct = async (id: string) => {
+    if (DJANGO_CONFIG.enabled) {
+      try {
+        await djangoSeller.deleteProduct(id);
+        setProducts(products.filter(p => p.id !== id));
+        toast.success('Product deleted');
+      } catch (err) {
+        toast.error('Failed to delete product');
+      }
+    } else {
+      setProducts(products.filter(p => p.id !== id));
+      toast.success('Product deleted');
+    }
   };
 
   const editProduct = (product: Product) => {
     setEditingProduct(product);
     setValue('name', product.name);
-    setValue('description', product.description);
+    // Parse back the description if it has appended stuff, but for now just use it
+    setValue('description', product.description.split('\n\nMake:')[0]);
     setValue('category', product.category);
+    // Setting price and stock from first listing if it exists
+    if (product.listings && product.listings.length > 0) {
+      setValue('price', String(product.listings[0].price));
+      setValue('stock', String(product.listings[0].stock));
+    }
     setDialogOpen(true);
   };
 
@@ -246,7 +313,7 @@ export default function SellerDashboard() {
                   <div><Label>Price ($)</Label><Input type="number" step="0.01" {...register('price')} />{errors.price && <p className="text-xs text-destructive mt-1">{errors.price.message}</p>}</div>
                   <div><Label>Stock</Label><Input type="number" {...register('stock')} /></div>
                 </div>
-                <div><Label>Images</Label><Input type="file" accept="image/*" multiple className="cursor-pointer" /></div>
+                <div><Label>Images</Label><Input id="product-images" type="file" accept="image/*" multiple className="cursor-pointer" /></div>
                 <Button type="submit" className="w-full">{editingProduct ? 'Update' : 'Add'} Product</Button>
               </form>
             </DialogContent>
