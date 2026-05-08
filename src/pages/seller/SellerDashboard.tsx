@@ -494,46 +494,114 @@ export default function SellerDashboard() {
         ))}
       </div>
 
-      {/* Product List */}
-      <div className="rounded-xl border bg-card">
-        <div className="p-4 border-b flex items-center justify-between">
-          <h2 className="font-display font-semibold">Products</h2>
-          <p className="text-xs text-muted-foreground">{products.length} items</p>
+      {/* Product Management Section */}
+      <div className="rounded-xl border bg-card shadow-sm overflow-hidden">
+        <div className="p-4 border-b bg-secondary/10 flex items-center justify-between">
+          <div>
+            <h2 className="font-display font-bold text-lg">Inventory Management</h2>
+            <p className="text-xs text-muted-foreground">Manage your product details, pricing, and stock levels.</p>
+          </div>
+          <div className="text-right">
+            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-primary/10 text-primary">
+              {products.length} Products Total
+            </span>
+          </div>
         </div>
+
         {loading ? (
-          <div className="p-8 text-center text-muted-foreground">Loading...</div>
+          <div className="p-20 text-center">
+            <Loader2 className="w-8 h-8 animate-spin mx-auto text-primary mb-2" />
+            <p className="text-sm text-muted-foreground">Loading your inventory...</p>
+          </div>
         ) : products.length === 0 ? (
-          <div className="p-12 text-center">
-            <Package className="w-12 h-12 text-muted-foreground/20 mx-auto mb-3" />
-            <p className="font-medium text-sm">No products yet</p>
-            <p className="text-xs text-muted-foreground mt-1">Add your first product or upload a catalog</p>
+          <div className="p-20 text-center">
+            <div className="w-16 h-16 bg-secondary/30 rounded-full flex items-center justify-center mx-auto mb-4">
+              <Package className="w-8 h-8 text-muted-foreground/40" />
+            </div>
+            <h3 className="font-semibold text-base mb-1">No products found</h3>
+            <p className="text-sm text-muted-foreground mb-6">You haven't added any products to your store yet.</p>
+            <Button onClick={() => setDialogOpen(true)} variant="outline">
+              <Plus className="w-4 h-4 mr-2" /> Add Your First Product
+            </Button>
           </div>
         ) : (
-          <div className="divide-y">
-            {products.map(product => (
-              <div key={product.id} className="p-4 flex items-center gap-4 hover:bg-secondary/30 transition">
-                <div className="w-12 h-12 bg-secondary rounded-lg shrink-0 overflow-hidden">
-                  {product.images[0] ? (
-                    <img src={product.images[0]} alt={product.name} className="w-full h-full object-cover" />
-                  ) : (
-                    <div className="flex items-center justify-center h-full"><Package className="w-6 h-6 text-muted-foreground/30" /></div>
-                  )}
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="font-medium text-sm truncate">{product.name}</p>
-                  <p className="text-xs text-muted-foreground">{product.category}</p>
-                  <p className="text-[10px] font-mono text-primary/80 mt-0.5">Code: {product.sku}</p>
-                </div>
-                <div className="text-right hidden sm:block">
-                  <p className="font-semibold text-sm">${product.listings[0]?.price}</p>
-                  <p className="text-xs text-muted-foreground">Stock: {product.listings[0]?.stock}</p>
-                </div>
-                <div className="flex gap-1">
-                  <Button variant="ghost" size="sm" onClick={() => editProduct(product)}><Pencil className="w-4 h-4" /></Button>
-                  <Button variant="ghost" size="sm" onClick={() => deleteProduct(product.id)}><Trash2 className="w-4 h-4 text-destructive" /></Button>
-                </div>
-              </div>
-            ))}
+          <div className="overflow-x-auto">
+            <table className="w-full text-left border-collapse">
+              <thead>
+                <tr className="bg-secondary/5 text-[11px] font-bold uppercase tracking-wider text-muted-foreground border-b">
+                  <th className="px-4 py-3">Product</th>
+                  <th className="px-4 py-3">Category</th>
+                  <th className="px-4 py-3">SKU / Code</th>
+                  <th className="px-4 py-3">Price</th>
+                  <th className="px-4 py-3">Stock</th>
+                  <th className="px-4 py-3 text-right">Actions</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y">
+                {products.map(product => (
+                  <tr key={product.id} className="hover:bg-secondary/20 transition-colors group">
+                    <td className="px-4 py-4">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 bg-secondary rounded-md shrink-0 overflow-hidden border">
+                          {product.images?.[0] ? (
+                            <img src={product.images[0]} alt={product.name} className="w-full h-full object-cover" />
+                          ) : (
+                            <div className="flex items-center justify-center h-full bg-secondary/50">
+                              <Package className="w-5 h-5 text-muted-foreground/30" />
+                            </div>
+                          )}
+                        </div>
+                        <div className="min-w-0">
+                          <p className="font-semibold text-sm truncate max-w-[200px]">{product.name}</p>
+                          <p className="text-[10px] text-muted-foreground">Updated {new Date(product.updatedAt || '').toLocaleDateString()}</p>
+                        </div>
+                      </div>
+                    </td>
+                    <td className="px-4 py-4">
+                      <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-medium bg-secondary text-secondary-foreground uppercase">
+                        {product.category}
+                      </span>
+                    </td>
+                    <td className="px-4 py-4">
+                      <code className="text-[10px] font-mono bg-primary/5 text-primary px-1.5 py-0.5 rounded">
+                        {product.sku}
+                      </code>
+                    </td>
+                    <td className="px-4 py-4">
+                      <p className="font-bold text-sm text-success">${Number(product.listings?.[0]?.price || 0).toFixed(2)}</p>
+                    </td>
+                    <td className="px-4 py-4">
+                      <div className="flex items-center gap-1.5">
+                        <div className={`w-1.5 h-1.5 rounded-full ${Number(product.listings?.[0]?.stock || 0) > 5 ? 'bg-success' : 'bg-destructive'}`} />
+                        <p className="text-xs font-medium">{product.listings?.[0]?.stock || 0} left</p>
+                      </div>
+                    </td>
+                    <td className="px-4 py-4 text-right">
+                      <div className="flex justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <Button 
+                          variant="ghost" 
+                          size="icon" 
+                          className="h-8 w-8 text-info hover:text-info hover:bg-info/10"
+                          onClick={() => editProduct(product)}
+                          title="Edit Product"
+                        >
+                          <Pencil className="w-4 h-4" />
+                        </Button>
+                        <Button 
+                          variant="ghost" 
+                          size="icon" 
+                          className="h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10"
+                          onClick={() => deleteProduct(product.id)}
+                          title="Delete Product"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
         )}
       </div>
