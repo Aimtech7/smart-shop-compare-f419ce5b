@@ -20,6 +20,7 @@ const SignupPage       = lazy(() => import("./pages/auth/SignupPage"));
 const LoginPage        = lazy(() => import("./pages/auth/LoginPage"));
 const BuyerDashboard   = lazy(() => import("./pages/buyer/BuyerDashboard"));
 const SellerDashboard  = lazy(() => import("./pages/seller/SellerDashboard"));
+const BulkUploadPage   = lazy(() => import("./pages/seller/BulkUploadPage"));
 const AboutPage        = lazy(() => import("./pages/company/AboutPage"));
 const SellerDirectory  = lazy(() => import("./pages/company/SellerDirectory"));
 const HowToSellPage    = lazy(() => import("./pages/company/HowToSellPage"));
@@ -100,6 +101,7 @@ function AppContent() {
                   <Route path="/auth/login" element={<LoginPage />} />
                   <Route path="/buyer" element={<ProtectedRoute allowedRoles={['buyer']}><BuyerDashboard /></ProtectedRoute>} />
                   <Route path="/seller" element={<ProtectedRoute allowedRoles={['seller']}><SellerDashboard /></ProtectedRoute>} />
+                  <Route path="/seller/bulk-upload" element={<ProtectedRoute allowedRoles={['seller']}><Suspense fallback={<PageLoader />}><BulkUploadPage /></Suspense></ProtectedRoute>} />
                   <Route path="/about" element={<AboutPage />} />
                   <Route path="/sellers" element={<SellerDirectory />} />
                   <Route path="/how-to-sell" element={<HowToSellPage />} />

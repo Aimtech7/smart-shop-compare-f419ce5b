@@ -2,20 +2,49 @@ import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { Package, Plus, Pencil, Trash2, DollarSign, ShoppingBag, TrendingUp, Clock, Copy, Check } from 'lucide-react';
+import { Package, Plus, Pencil, Trash2, DollarSign, ShoppingBag, TrendingUp, Clock, Copy, Check, Sparkles, Loader2, Upload } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { BulkUploadDialog } from '@/components/BulkUploadDialog';
+import { ComboboxInput } from '@/components/ComboboxInput';
 import { api } from '@/services/api';
-import { djangoSeller } from '@/services/django';
+import { djangoSeller, http } from '@/services/django';
 import { DJANGO_CONFIG } from '@/services/django/client';
 import { toast } from 'sonner';
-import { generateProductCode, CATEGORIES, MAKES, TYPES } from '@/lib/productCode';
+import { generateProductCode, MAKES, TYPES } from '@/lib/productCode';
 import type { Product, StoreListing } from '@/types';
+import { Link } from 'react-router-dom';
+
+// Common brand suggestions (user can always type their own)
+const BRAND_SUGGESTIONS = [
+  'Apple','Samsung','Dell','HP','Lenovo','Asus','Acer','Sony','LG','Microsoft',
+  'Huawei','Xiaomi','OnePlus','Google','Motorola','Nokia','Oppo','Vivo','Realme',
+  'Canon','Nikon','Fujifilm','Panasonic','Philips','Bosch','Dyson','Nike','Adidas',
+  ...MAKES
+].filter((v,i,a) => a.indexOf(v) === i);
+
+const TYPE_SUGGESTIONS = [
+  'Laptop','Desktop','Smartphone','Tablet','Smartwatch','Headphones','Earbuds',
+  'Camera','Printer','Monitor','Keyboard','Mouse','Speaker','Charger','Cable',
+  'Router','Hard Drive','SSD','RAM','GPU','CPU','TV','Refrigerator','Washing Machine',
+  'Microwave','Air Conditioner','Vacuum Cleaner','Blender','Shoes','T-Shirt','Dress',
+  'Jeans','Jacket','Bag','Watch','Perfume','Skincare','Supplement','Book',
+  ...TYPES
+].filter((v,i,a) => a.indexOf(v) === i);
+
+// AI-powered description generator (template-based, works offline)
+function generateAIDescription(make: string, type: string, model: string, specs: string): string {
+  const specList = specs ? specs.split(',').map(s => s.trim()).filter(Boolean) : [];
+  const specText = specList.length > 0 ? `\n\nKey Specifications:\n${specList.map(s => `• ${s}`).join('\n')}` : '';
+  const templates = [
+    `Introducing the ${make} ${model} ${type} — engineered for performance and built to last. Whether you're a professional or a power user, this device delivers an exceptional experience.${specText}\n\nDesigned with precision, the ${make} ${model} combines sleek aesthetics with powerful internals. A must-have for anyone who demands the best.`,
+    `The ${make} ${model} redefines what a ${type} should be. Packed with cutting-edge technology and a premium build, it's designed to keep up with your most demanding tasks.${specText}\n\nWith ${make}'s proven reliability and the latest innovations, the ${model} stands out as a top-tier choice in its class.`,
+    `Experience the next level with the ${make} ${model} ${type}. Combining powerful performance, elegant design, and long-lasting durability — it's crafted for those who refuse to compromise.${specText}\n\nTrusted by millions worldwide, ${make} continues to deliver excellence. The ${model} is no exception.`,
+  ];
+  return templates[Math.floor(Math.random() * templates.length)];
+}
 
 const productSchema = z.object({
   name: z.string().min(2).max(255),
@@ -39,6 +68,12 @@ export default function SellerDashboard() {
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [generatedCode, setGeneratedCode] = useState('');
   const [copiedCode, setCopiedCode] = useState(false);
+  const [aiLoading, setAiLoading] = useState(false);
+  // Categories fetched from Django: [{id, name, slug}]
+  const [categories, setCategories] = useState<{id: string; name: string}[]>([]);
+  const [catDialogOpen, setCatDialogOpen] = useState(false);
+  const [newCatName, setNewCatName] = useState('');
+  const [catLoading, setCatLoading] = useState(false);
 
   const { register, handleSubmit, reset, formState: { errors }, setValue, watch } = useForm<ProductForm>({
     resolver: zodResolver(productSchema),
@@ -49,6 +84,58 @@ export default function SellerDashboard() {
   const watchType = watch('type');
   const watchModel = watch('model');
   const watchSpecs = watch('specs');
+
+  // Fetch categories from Django on mount
+  useEffect(() => {
+    async function loadCategories() {
+      try {
+        if (DJANGO_CONFIG.enabled) {
+          const res = await http.get<any>('/products/categories/');
+          const data = Array.isArray(res) ? res : res.results || res.data || [];
+          setCategories(data);
+        }
+      } catch {
+        // Fall back to empty — user can still type category name
+      }
+    }
+    loadCategories();
+  }, []);
+
+  const handleAIGenerate = () => {
+    const make = watchMake || '';
+    const type = watchType || '';
+    const model = watchModel || '';
+    const specs = watchSpecs || '';
+    if (!make && !type && !model) {
+      toast.error('Fill in Make, Type and Model first');
+      return;
+    }
+    setAiLoading(true);
+    setTimeout(() => {
+      const desc = generateAIDescription(make, type, model, specs);
+      setValue('description', desc);
+      setAiLoading(false);
+      toast.success('✨ Description generated!');
+    }, 800);
+  };
+
+  const handleCreateCategory = async () => {
+    if (!newCatName.trim()) return;
+    setCatLoading(true);
+    try {
+      const res = await djangoSeller.createCategory(newCatName);
+      const newCat = { id: res.id, name: res.name };
+      setCategories(prev => [...prev, newCat]);
+      setValue('category', res.name);
+      setCatDialogOpen(false);
+      setNewCatName('');
+      toast.success('Category created!');
+    } catch (err: any) {
+      toast.error('Failed to create category');
+    } finally {
+      setCatLoading(false);
+    }
+  };
 
   // Auto-generate code when fields change
   useEffect(() => {
@@ -129,9 +216,12 @@ export default function SellerDashboard() {
         const formData = new FormData();
         formData.append('name', data.name);
         formData.append('description', fullDescription);
-        formData.append('category', data.category);
+        // Send category UUID if we have it, otherwise send name (Django will handle)
+        const catMatch = categories.find(c => c.name.toLowerCase() === data.category.toLowerCase());
+        if (catMatch) formData.append('category', catMatch.id);
         formData.append('price', data.price);
         formData.append('stock_qty', data.stock);
+        formData.append('delivery_days', '3');
         formData.append('SKU', code);
         
         const fileInput = document.getElementById('product-images') as HTMLInputElement;
@@ -235,54 +325,92 @@ export default function SellerDashboard() {
       <div className="flex items-center justify-between mb-8">
         <h1 className="font-display text-2xl font-bold">Seller Dashboard</h1>
         <div className="flex gap-2">
-          <BulkUploadDialog />
+          <Link to="/seller/bulk-upload">
+            <Button variant="outline"><Upload className="w-4 h-4 mr-2" />Bulk Upload</Button>
+          </Link>
           <Dialog open={dialogOpen} onOpenChange={(o) => { setDialogOpen(o); if (!o) { setEditingProduct(null); reset(); setGeneratedCode(''); } }}>
             <DialogTrigger asChild><Button><Plus className="w-4 h-4 mr-2" />Add Product</Button></DialogTrigger>
-            <DialogContent className="max-w-lg max-h-[85vh] overflow-y-auto">
+            <DialogContent className="max-w-xl max-h-[90vh] overflow-y-auto">
               <DialogHeader><DialogTitle>{editingProduct ? 'Edit Product' : 'Add New Product'}</DialogTitle></DialogHeader>
-              <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-                <div><Label>Product Name</Label><Input {...register('name')} placeholder="e.g. Samsung Galaxy S24 Ultra" />{errors.name && <p className="text-xs text-destructive mt-1">{errors.name.message}</p>}</div>
-                <div><Label>Description</Label><Textarea {...register('description')} placeholder="Detailed product description..." />{errors.description && <p className="text-xs text-destructive mt-1">{errors.description.message}</p>}</div>
+              <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 pt-1">
 
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <Label>Category</Label>
-                    <Select onValueChange={(v) => setValue('category', v)} defaultValue="">
-                      <SelectTrigger><SelectValue placeholder="Select category" /></SelectTrigger>
-                      <SelectContent>
-                        {CATEGORIES.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
-                      </SelectContent>
-                    </Select>
-                    {errors.category && <p className="text-xs text-destructive mt-1">{errors.category.message}</p>}
+                {/* Product Name */}
+                <div>
+                  <Label>Product Name</Label>
+                  <Input {...register('name')} placeholder="e.g. Samsung Galaxy S24 Ultra" />
+                  {errors.name && <p className="text-xs text-destructive mt-1">{errors.name.message}</p>}
+                </div>
+
+                {/* Description + AI button */}
+                <div>
+                  <div className="flex items-center justify-between mb-1">
+                    <Label>Description</Label>
+                    <button
+                      type="button"
+                      onClick={handleAIGenerate}
+                      disabled={aiLoading}
+                      className="flex items-center gap-1.5 text-xs font-medium text-purple-600 dark:text-purple-400 hover:opacity-80 transition-opacity disabled:opacity-50"
+                    >
+                      {aiLoading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Sparkles className="w-3.5 h-3.5" />}
+                      {aiLoading ? 'Generating…' : '✨ AI Generate'}
+                    </button>
                   </div>
+                  <Textarea {...register('description')} rows={4} placeholder="Detailed product description… or click AI Generate above" />
+                  {errors.description && <p className="text-xs text-destructive mt-1">{errors.description.message}</p>}
+                </div>
+
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <div className="flex items-center justify-between mb-1">
+                        <Label>Category</Label>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          className="h-6 px-1.5 text-[10px] gap-1 text-primary"
+                          onClick={() => setCatDialogOpen(true)}
+                        >
+                          <Plus className="w-3 h-3" /> New
+                        </Button>
+                      </div>
+                      <ComboboxInput
+                        value={watchCategory || ''}
+                        onChange={v => setValue('category', v)}
+                        suggestions={categories.length > 0 ? categories.map(c => c.name) : ['Electronics','Fashion','Home & Garden','Sports','Books','Automotive','Health','Beauty','Toys','Food']}
+                        placeholder="e.g. Electronics"
+                        error={!!errors.category}
+                      />
+                      {errors.category && <p className="text-xs text-destructive mt-1">{errors.category.message}</p>}
+                    </div>
                   <div>
                     <Label>Make / Brand</Label>
-                    <Select onValueChange={(v) => setValue('make', v)} defaultValue="">
-                      <SelectTrigger><SelectValue placeholder="Select brand" /></SelectTrigger>
-                      <SelectContent>
-                        {MAKES.map(m => <SelectItem key={m} value={m}>{m}</SelectItem>)}
-                        <SelectItem value="Other">Other</SelectItem>
-                      </SelectContent>
-                    </Select>
+                    <ComboboxInput
+                      value={watchMake || ''}
+                      onChange={v => setValue('make', v)}
+                      suggestions={BRAND_SUGGESTIONS}
+                      placeholder="e.g. Apple"
+                      error={!!errors.make}
+                    />
                     {errors.make && <p className="text-xs text-destructive mt-1">{errors.make.message}</p>}
                   </div>
                 </div>
 
+                {/* Type + Model — both free text */}
                 <div className="grid grid-cols-2 gap-3">
                   <div>
                     <Label>Type</Label>
-                    <Select onValueChange={(v) => setValue('type', v)} defaultValue="">
-                      <SelectTrigger><SelectValue placeholder="Select type" /></SelectTrigger>
-                      <SelectContent>
-                        {TYPES.map(t => <SelectItem key={t} value={t}>{t}</SelectItem>)}
-                        <SelectItem value="Other">Other</SelectItem>
-                      </SelectContent>
-                    </Select>
+                    <ComboboxInput
+                      value={watchType || ''}
+                      onChange={v => setValue('type', v)}
+                      suggestions={TYPE_SUGGESTIONS}
+                      placeholder="e.g. Laptop"
+                      error={!!errors.type}
+                    />
                     {errors.type && <p className="text-xs text-destructive mt-1">{errors.type.message}</p>}
                   </div>
                   <div>
                     <Label>Model</Label>
-                    <Input {...register('model')} placeholder="e.g. S24 Ultra" />
+                    <Input {...register('model')} placeholder="e.g. MacBook Pro M3" />
                     {errors.model && <p className="text-xs text-destructive mt-1">{errors.model.message}</p>}
                   </div>
                 </div>
@@ -316,6 +444,35 @@ export default function SellerDashboard() {
                 <div><Label>Images</Label><Input id="product-images" type="file" accept="image/*" multiple className="cursor-pointer" /></div>
                 <Button type="submit" className="w-full">{editingProduct ? 'Update' : 'Add'} Product</Button>
               </form>
+            </DialogContent>
+          </Dialog>
+
+          {/* New Category Dialog */}
+          <Dialog open={catDialogOpen} onOpenChange={setCatDialogOpen}>
+            <DialogContent className="sm:max-w-[400px]">
+              <DialogHeader>
+                <DialogTitle>Add New Category</DialogTitle>
+              </DialogHeader>
+              <div className="space-y-4 py-4">
+                <div className="space-y-2">
+                  <Label htmlFor="catName">Category Name</Label>
+                  <Input 
+                    id="catName" 
+                    value={newCatName} 
+                    onChange={(e) => setNewCatName(e.target.value)}
+                    placeholder="e.g. Smart Home"
+                    onKeyDown={(e) => e.key === 'Enter' && handleCreateCategory()}
+                  />
+                </div>
+                <Button 
+                  className="w-full" 
+                  onClick={handleCreateCategory}
+                  disabled={catLoading || !newCatName.trim()}
+                >
+                  {catLoading ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
+                  Create Category
+                </Button>
+              </div>
             </DialogContent>
           </Dialog>
         </div>

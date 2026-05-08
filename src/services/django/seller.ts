@@ -18,4 +18,5 @@ export const djangoSeller = {
     http.patch<Product>(`/products/${id}/`, payload),
   deleteProduct: (id: string) => http.delete<void>(`/products/${id}/`),
   orders: () => http.get<Order[]>('/seller/orders/'),
+  createCategory: (name: string) => http.post<{id: string, name: string}>('/products/categories/create/', { name }),
 };
