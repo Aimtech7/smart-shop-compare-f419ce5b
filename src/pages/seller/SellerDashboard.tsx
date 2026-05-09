@@ -8,6 +8,11 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { 
+  LineChart, Line, AreaChart, Area, XAxis, YAxis, CartesianGrid, 
+  Tooltip, ResponsiveContainer, PieChart, Pie, Cell, BarChart, Bar 
+} from 'recharts';
 import { ComboboxInput } from '@/components/ComboboxInput';
 import { api } from '@/services/api';
 import { djangoSeller, http } from '@/services/django';
@@ -69,11 +74,29 @@ export default function SellerDashboard() {
   const [generatedCode, setGeneratedCode] = useState('');
   const [copiedCode, setCopiedCode] = useState(false);
   const [aiLoading, setAiLoading] = useState(false);
+  const [is2FAEnabled, setIs2FAEnabled] = useState(false);
+  const [is2FALoading, setIs2FALoading] = useState(false);
+
+  const toggle2FA = async () => {
+    setIs2FALoading(true);
+    try {
+      const res = await http.post('/users/toggle-2fa/', { enabled: !is2FAEnabled });
+      setIs2FAEnabled(res.is_2fa_enabled);
+      toast.success(res.is_2fa_enabled ? '2FA Enabled!' : '2FA Disabled');
+    } catch {
+      toast.error('Failed to update 2FA status');
+    } finally {
+      setIs2FALoading(false);
+    }
+  };
   // Categories fetched from Django: [{id, name, slug}]
   const [categories, setCategories] = useState<{id: string; name: string}[]>([]);
   const [catDialogOpen, setCatDialogOpen] = useState(false);
   const [newCatName, setNewCatName] = useState('');
   const [catLoading, setCatLoading] = useState(false);
+  const [orders, setOrders] = useState<any[]>([]);
+  const [analytics, setAnalytics] = useState<any>(null);
+  const [activeTab, setActiveTab] = useState('overview');
 
   const { register, handleSubmit, reset, formState: { errors }, setValue, watch } = useForm<ProductForm>({
     resolver: zodResolver(productSchema),
@@ -101,7 +124,7 @@ export default function SellerDashboard() {
     loadCategories();
   }, []);
 
-  const handleAIGenerate = () => {
+  const handleAIGenerate = async () => {
     const make = watchMake || '';
     const type = watchType || '';
     const model = watchModel || '';
@@ -111,12 +134,45 @@ export default function SellerDashboard() {
       return;
     }
     setAiLoading(true);
-    setTimeout(() => {
-      const desc = generateAIDescription(make, type, model, specs);
-      setValue('description', desc);
+    try {
+      if (DJANGO_CONFIG.enabled) {
+        const res = await http.post<any>('/products/ai-describe/', { make, type, model, specs });
+        setValue('description', res.description);
+        toast.success('✨ Description generated!');
+      } else {
+        setTimeout(() => {
+          const desc = generateAIDescription(make, type, model, specs);
+          setValue('description', desc);
+          toast.success('✨ Description generated!');
+        }, 800);
+      }
+    } catch {
+      toast.error('Failed to generate description');
+    } finally {
       setAiLoading(false);
-      toast.success('✨ Description generated!');
-    }, 800);
+    }
+  };
+
+  const handleEnhanceImage = async () => {
+    const images = watch('images');
+    const imageUrl = images && images.length > 0 ? images[0] : '';
+    if (!imageUrl) {
+      toast.error('Add an image URL first');
+      return;
+    }
+    setAiLoading(true);
+    try {
+      const res = await http.post('/ai/enhance-image/', { image_url: imageUrl });
+      if (res.optimizations) {
+        toast.success('AI Analysis Complete!', {
+          description: res.optimizations.join(' • '),
+        });
+      }
+    } catch {
+      toast.error('AI Enhancement failed');
+    } finally {
+      setAiLoading(false);
+    }
   };
 
   const handleCreateCategory = async () => {
@@ -157,11 +213,12 @@ export default function SellerDashboard() {
     const load = async () => {
       try {
         if (DJANGO_CONFIG.enabled) {
-          const [p, d] = await Promise.all([
+          const [p, d, o, a] = await Promise.all([
             djangoSeller.products(),
             djangoSeller.dashboard(),
+            djangoSeller.orders(),
+            djangoSeller.analytics().catch(() => null),
           ]);
-          // Adapt Django products to UI shape (attach empty listings if backend doesn't include them)
           setProducts(
             (p as any[]).map((prod) => ({
               ...prod,
@@ -174,6 +231,8 @@ export default function SellerDashboard() {
             revenue: d.revenue ?? 0,
             pendingOrders: d.pendingOrders ?? 0,
           });
+          setOrders(o || []);
+          setAnalytics(a);
         } else {
           const [p, m] = await Promise.all([
             api.getSellerProducts('s1'),
@@ -191,6 +250,16 @@ export default function SellerDashboard() {
     };
     load();
   }, []);
+
+  const updateOrderStatus = async (orderId: string, newStatus: string) => {
+    try {
+      await http.patch(`/orders/${orderId}/status/`, { status: newStatus });
+      setOrders(prev => prev.map(o => o.id === orderId ? { ...o, status: newStatus } : o));
+      toast.success('Order status updated');
+    } catch {
+      toast.error('Failed to update status');
+    }
+  };
 
   const copyCode = () => {
     if (generatedCode) {
@@ -218,7 +287,11 @@ export default function SellerDashboard() {
         formData.append('description', fullDescription);
         // Send category UUID if we have it, otherwise send name (Django will handle)
         const catMatch = categories.find(c => c.name.toLowerCase() === data.category.toLowerCase());
-        if (catMatch) formData.append('category', catMatch.id);
+        if (catMatch) {
+          formData.append('category', catMatch.id);
+        } else {
+          formData.append('category', data.category);
+        }
         formData.append('price', data.price);
         formData.append('stock_qty', data.stock);
         formData.append('delivery_days', '3');
@@ -441,7 +514,28 @@ export default function SellerDashboard() {
                   <div><Label>Price ($)</Label><Input type="number" step="0.01" {...register('price')} />{errors.price && <p className="text-xs text-destructive mt-1">{errors.price.message}</p>}</div>
                   <div><Label>Stock</Label><Input type="number" {...register('stock')} /></div>
                 </div>
-                <div><Label>Images</Label><Input id="product-images" type="file" accept="image/*" multiple className="cursor-pointer" /></div>
+                <div>
+                  <Label>Product Images (URLs)</Label>
+                  <div className="flex gap-2">
+                    <Input 
+                      placeholder="Paste image URL..." 
+                      {...register('images.0')} 
+                      className={errors.images?.[0] ? 'border-destructive' : ''}
+                    />
+                    <Button 
+                      type="button" 
+                      variant="outline" 
+                      size="icon" 
+                      className="shrink-0 text-primary border-primary/20 hover:bg-primary/10"
+                      onClick={handleEnhanceImage}
+                      disabled={aiLoading}
+                      title="AI Image Enhancer"
+                    >
+                      <Sparkles className="w-4 h-4" />
+                    </Button>
+                  </div>
+                  {errors.images?.[0] && <p className="text-xs text-destructive mt-1">{errors.images[0].message}</p>}
+                </div>
                 <Button type="submit" className="w-full">{editingProduct ? 'Update' : 'Add'} Product</Button>
               </form>
             </DialogContent>
@@ -486,7 +580,7 @@ export default function SellerDashboard() {
           { label: 'Revenue', value: `$${metrics.revenue.toLocaleString()}`, icon: DollarSign, color: 'text-success' },
           { label: 'Pending', value: metrics.pendingOrders, icon: Clock, color: 'text-warning' },
         ].map(({ label, value, icon: Icon, color }) => (
-          <div key={label} className="rounded-xl border bg-card p-4">
+          <div key={label} className="rounded-xl border bg-card p-4 shadow-sm hover:shadow-md transition-shadow">
             <div className="flex items-center justify-between mb-2"><Icon className={`w-5 h-5 ${color}`} /><TrendingUp className="w-4 h-4 text-success" /></div>
             <p className="font-display text-2xl font-bold">{value}</p>
             <p className="text-xs text-muted-foreground">{label}</p>
@@ -494,19 +588,79 @@ export default function SellerDashboard() {
         ))}
       </div>
 
-      {/* Product Management Section */}
-      <div className="rounded-xl border bg-card shadow-sm overflow-hidden">
-        <div className="p-4 border-b bg-secondary/10 flex items-center justify-between">
-          <div>
-            <h2 className="font-display font-bold text-lg">Inventory Management</h2>
-            <p className="text-xs text-muted-foreground">Manage your product details, pricing, and stock levels.</p>
+      <Tabs defaultValue="overview" className="space-y-6">
+        <TabsList className="bg-secondary/30 p-1">
+          <TabsTrigger value="overview">Overview</TabsTrigger>
+          <TabsTrigger value="inventory">Inventory</TabsTrigger>
+          <TabsTrigger value="orders">Orders</TabsTrigger>
+          <TabsTrigger value="analytics">Analytics</TabsTrigger>
+          <TabsTrigger value="settings">Settings</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="overview" className="space-y-6">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div className="lg:col-span-2 rounded-xl border bg-card p-6 shadow-sm">
+              <h3 className="font-bold mb-4">Recent Sales Trend</h3>
+              <div className="h-[250px] w-full">
+                <ResponsiveContainer width="100%" height="100%">
+                  <AreaChart data={analytics?.daily_sales || []}>
+                    <defs>
+                      <linearGradient id="colorRev" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%" stopColor="#8b5cf6" stopOpacity={0.3}/>
+                        <stop offset="95%" stopColor="#8b5cf6" stopOpacity={0}/>
+                      </linearGradient>
+                    </defs>
+                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#88888820" />
+                    <XAxis dataKey="date" fontSize={10} axisLine={false} tickLine={false} />
+                    <YAxis fontSize={10} axisLine={false} tickLine={false} tickFormatter={(v) => `$${v}`} />
+                    <Tooltip 
+                      contentStyle={{ backgroundColor: '#1a1a1a', border: 'none', borderRadius: '8px', color: '#fff' }}
+                      itemStyle={{ color: '#a78bfa' }}
+                    />
+                    <Area type="monotone" dataKey="revenue" stroke="#8b5cf6" fillOpacity={1} fill="url(#colorRev)" />
+                  </AreaChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
+            <div className="rounded-xl border bg-card p-6 shadow-sm">
+              <h3 className="font-bold mb-4">Category Mix</h3>
+              <div className="h-[250px] w-full">
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie
+                      data={analytics?.category_sales || []}
+                      innerRadius={60}
+                      outerRadius={80}
+                      paddingAngle={5}
+                      dataKey="value"
+                    >
+                      {analytics?.category_sales?.map((_: any, index: number) => (
+                        <Cell key={`cell-${index}`} fill={['#8b5cf6', '#3b82f6', '#10b981', '#f59e0b', '#ef4444'][index % 5]} />
+                      ))}
+                    </Pie>
+                    <Tooltip />
+                  </PieChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
           </div>
-          <div className="text-right">
-            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-primary/10 text-primary">
-              {products.length} Products Total
-            </span>
-          </div>
-        </div>
+        </TabsContent>
+
+        <TabsContent value="inventory">
+          <div className="rounded-xl border bg-card shadow-sm overflow-hidden">
+            {/* The table content goes here (previously implemented) */}
+            <div className="p-4 border-b bg-secondary/10 flex items-center justify-between">
+              <div>
+                <h2 className="font-display font-bold text-lg">Inventory Management</h2>
+                <p className="text-xs text-muted-foreground">Manage your product details, pricing, and stock levels.</p>
+              </div>
+              <div className="text-right">
+                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-primary/10 text-primary">
+                  {products.length} Products Total
+                </span>
+              </div>
+            </div>
+            {/* ... rest of the table logic ... */}
 
         {loading ? (
           <div className="p-20 text-center">
@@ -604,6 +758,177 @@ export default function SellerDashboard() {
             </table>
           </div>
         )}
+      </div>
+    </TabsContent>
+
+    <TabsContent value="orders">
+      <div className="rounded-xl border bg-card shadow-sm overflow-hidden">
+        <div className="p-4 border-b bg-secondary/10">
+          <h2 className="font-display font-bold text-lg">Order Management</h2>
+          <p className="text-xs text-muted-foreground">Process and track customer orders for your products.</p>
+        </div>
+        <div className="overflow-x-auto">
+          <table className="w-full text-left border-collapse">
+            <thead>
+              <tr className="bg-secondary/5 text-[11px] font-bold uppercase tracking-wider text-muted-foreground border-b">
+                <th className="px-4 py-3">Order ID</th>
+                <th className="px-4 py-3">Customer</th>
+                <th className="px-4 py-3">Items</th>
+                <th className="px-4 py-3">Total</th>
+                <th className="px-4 py-3">Status</th>
+                <th className="px-4 py-3 text-right">Action</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y">
+              {orders.map(order => (
+                <tr key={order.id} className="hover:bg-secondary/20 transition-colors">
+                  <td className="px-4 py-4">
+                    <code className="text-[10px] font-mono">#{order.id.slice(0, 8)}</code>
+                  </td>
+                  <td className="px-4 py-4">
+                    <p className="text-sm font-medium">{order.buyer_name || 'Customer'}</p>
+                    <p className="text-[10px] text-muted-foreground">{order.buyer_email}</p>
+                  </td>
+                  <td className="px-4 py-4">
+                    <p className="text-xs">{order.items?.length} items</p>
+                  </td>
+                  <td className="px-4 py-4">
+                    <p className="text-sm font-bold text-success">${Number(order.seller_total || 0).toFixed(2)}</p>
+                  </td>
+                  <td className="px-4 py-4">
+                    <select 
+                      value={order.status} 
+                      onChange={(e) => updateOrderStatus(order.id, e.target.value)}
+                      className="text-xs bg-secondary border-none rounded px-2 py-1 outline-none"
+                    >
+                      <option value="pending">Pending</option>
+                      <option value="processing">Processing</option>
+                      <option value="shipped">Shipped</option>
+                      <option value="delivered">Delivered</option>
+                      <option value="cancelled">Cancelled</option>
+                    </select>
+                  </td>
+                  <td className="px-4 py-4 text-right">
+                    <Button variant="ghost" size="sm" className="h-8 text-[10px]">View Details</Button>
+                  </td>
+                </tr>
+              ))}
+              {orders.length === 0 && (
+                <tr>
+                  <td colSpan={6} className="px-4 py-20 text-center text-muted-foreground">
+                    No orders placed yet.
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </TabsContent>
+
+    <TabsContent value="analytics">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="rounded-xl border bg-card p-6 shadow-sm">
+          <h3 className="font-bold mb-4">Daily Sales Revenue</h3>
+          <div className="h-[300px]">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={analytics?.daily_sales || []}>
+                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#88888820" />
+                <XAxis dataKey="date" fontSize={10} axisLine={false} tickLine={false} />
+                <YAxis fontSize={10} axisLine={false} tickLine={false} />
+                <Tooltip 
+                  cursor={{fill: '#8b5cf610'}}
+                  contentStyle={{ backgroundColor: '#1a1a1a', border: 'none', borderRadius: '8px', color: '#fff' }}
+                />
+                <Bar dataKey="revenue" fill="#8b5cf6" radius={[4, 4, 0, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+        <div className="rounded-xl border bg-card p-6 shadow-sm">
+          <h3 className="font-bold mb-4">Category Distribution</h3>
+          <div className="h-[300px]">
+            <ResponsiveContainer width="100%" height="100%">
+              <PieChart>
+                <Pie
+                  data={analytics?.category_sales || []}
+                  innerRadius={80}
+                  outerRadius={100}
+                  paddingAngle={5}
+                  dataKey="value"
+                >
+                  {analytics?.category_sales?.map((_: any, index: number) => (
+                    <Cell key={`cell-${index}`} fill={['#8b5cf6', '#3b82f6', '#10b981', '#f59e0b', '#ef4444'][index % 5]} />
+                  ))}
+                </Pie>
+                <Tooltip />
+              </PieChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+      </div>
+    </TabsContent>
+    <TabsContent value="settings">
+      <div className="max-w-2xl space-y-6">
+        <div className="rounded-xl border bg-card p-6 shadow-sm">
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <h3 className="font-bold text-lg">Two-Factor Authentication</h3>
+              <p className="text-sm text-muted-foreground">Add an extra layer of security to your account.</p>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className={`text-[10px] font-bold uppercase tracking-wider ${is2FAEnabled ? 'text-success' : 'text-muted-foreground'}`}>
+                {is2FAEnabled ? 'Enabled' : 'Disabled'}
+              </span>
+              <Button 
+                variant={is2FAEnabled ? "destructive" : "default"}
+                size="sm"
+                onClick={toggle2FA}
+                disabled={is2FALoading}
+              >
+                {is2FALoading ? <Loader2 className="w-4 h-4 animate-spin" /> : (is2FAEnabled ? 'Disable' : 'Enable')}
+              </Button>
+            </div>
+          </div>
+          {is2FAEnabled && (
+            <div className="p-4 rounded-lg bg-secondary/20 border border-secondary/40">
+              <p className="text-xs">Your account is secured with TOTP. Use an app like Google Authenticator or Authy.</p>
+            </div>
+          )}
+        </div>
+      </div>
+    </TabsContent>
+  </Tabs>
+
+          {/* New Category Dialog */}
+          <Dialog open={catDialogOpen} onOpenChange={setCatDialogOpen}>
+            <DialogContent className="sm:max-w-[400px]">
+              <DialogHeader>
+                <DialogTitle>Add New Category</DialogTitle>
+              </DialogHeader>
+              <div className="space-y-4 py-4">
+                <div className="space-y-2">
+                  <Label htmlFor="catName">Category Name</Label>
+                  <Input 
+                    id="catName" 
+                    value={newCatName} 
+                    onChange={(e) => setNewCatName(e.target.value)}
+                    placeholder="e.g. Smart Home"
+                    onKeyDown={(e) => e.key === 'Enter' && handleCreateCategory()}
+                  />
+                </div>
+                <Button 
+                  className="w-full" 
+                  onClick={handleCreateCategory}
+                  disabled={catLoading || !newCatName.trim()}
+                >
+                  {catLoading ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
+                  Create Category
+                </Button>
+              </div>
+            </DialogContent>
+          </Dialog>
+        </div>
       </div>
     </div>
   );

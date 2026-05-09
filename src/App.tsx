@@ -119,11 +119,14 @@ function AppContent() {
   );
 }
 
+import { NotificationListener } from "./components/NotificationListener";
+
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
       <Toaster />
       <Sonner />
+      <NotificationListener />
       <BrowserRouter>
         <AppContent />
       </BrowserRouter>

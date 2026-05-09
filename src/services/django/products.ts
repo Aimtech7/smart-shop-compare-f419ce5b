@@ -1,4 +1,4 @@
-import { http } from './client';
+import { http, fixImageUrl } from './client';
 import type { Product, StoreListing, Review } from '@/types';
 
 export interface ProductListParams {
@@ -28,7 +28,7 @@ export const djangoProducts = {
     const data = Array.isArray(res) ? res : (res?.results || []);
     return data.map((p: any) => ({
       ...p,
-      images: p.images ? p.images.map((img: any) => img.image) : [],
+      images: p.images ? p.images.map((img: any) => fixImageUrl(img.image)) : [],
       category: p.category_name || p.category,
       listings: p.listings || [{
         id: p.id,
@@ -46,7 +46,7 @@ export const djangoProducts = {
     const p = await http.get<any>(`/products/${id}/`);
     return {
       ...p,
-      images: p.images ? p.images.map((img: any) => img.image) : [],
+      images: p.images ? p.images.map((img: any) => fixImageUrl(img.image)) : [],
       category: p.category_name || p.category,
       listings: p.listings || [{
         id: p.id,
@@ -62,6 +62,13 @@ export const djangoProducts = {
   },
   listings: (productId: string) =>
     http.get<StoreListing[]>(`/products/${productId}/listings/`),
+  categories: async () => {
+    const res = await http.get<any[]>('/products/categories/');
+    return res.map(c => ({
+      ...c,
+      image: fixImageUrl(c.image)
+    }));
+  },
   reviews: (productId: string) =>
     http.get<Review[]>(`/products/${productId}/reviews/`),
 };

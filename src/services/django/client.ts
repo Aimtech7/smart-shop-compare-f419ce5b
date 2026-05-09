@@ -9,8 +9,18 @@
  */
 
 export const DJANGO_CONFIG = {
-  baseUrl: import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api',
+  baseUrl: import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api/v1',
   enabled: import.meta.env.VITE_USE_DJANGO_API === 'true',
+};
+
+// Helper to get the backend root (e.g., http://localhost:8000) for media files
+export const backendRoot = DJANGO_CONFIG.baseUrl.split('/api')[0];
+
+export const fixImageUrl = (url: string | null | undefined): string => {
+  if (!url) return '';
+  if (url.startsWith('http')) return url;
+  // Prepend backend root if it's a relative path starting with /
+  return `${backendRoot}${url.startsWith('/') ? '' : '/'}${url}`;
 };
 
 export type HttpMethod = 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';

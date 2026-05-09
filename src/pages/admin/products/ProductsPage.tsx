@@ -16,7 +16,8 @@ export default function ProductsPage() {
       try {
         if (DJANGO_CONFIG.enabled) {
           const res = await djangoAdmin.products();
-          const data = res.results || res.data?.results || res.data || [];
+          // Handle various response structures: {results: []}, {data: {results: []}}, {data: []}, or []
+          const data = res.results || res.data?.results || res.data || (Array.isArray(res) ? res : []);
           setProducts(Array.isArray(data) ? data : []);
         } else {
           setProducts(Array.from({ length: 10 }).map((_, i) => ({

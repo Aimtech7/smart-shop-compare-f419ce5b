@@ -165,8 +165,8 @@ export default function AdminDashboard() {
     // 3. Recent orders
     try {
       const res = await djangoAdmin.orders();
-      const data = res?.results || res?.data?.results || res?.data || res;
-      if (Array.isArray(data) && data.length > 0) {
+      const data = res?.results || res?.data?.results || res?.data || (Array.isArray(res) ? res : null);
+      if (Array.isArray(data)) {
         setRecentOrders(data.slice(0, 8));
         fetchedAny = true;
       }

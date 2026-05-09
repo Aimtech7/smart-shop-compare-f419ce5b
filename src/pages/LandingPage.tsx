@@ -31,15 +31,21 @@ const brands = ['Samsung', 'Apple', 'Sony', 'Nike', 'Dyson', 'LG', 'Adidas', 'Bo
 export default function LandingPage() {
   const [topStores, setTopStores] = useState<SellerProfile[]>([]);
   const [products, setProducts] = useState<(Product & { listings: StoreListing[] })[]>([]);
+  const [categories, setCategories] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [email, setEmail] = useState('');
   const { searchQuery, setSearchQuery } = useStore();
   const navigate = useNavigate();
 
   useEffect(() => {
-    Promise.all([api.getTopStores(), api.getProducts()]).then(([stores, prods]) => {
+    Promise.all([
+      api.getTopStores(), 
+      api.getProducts(),
+      api.getCategories ? api.getCategories() : Promise.resolve([])
+    ]).then(([stores, prods, cats]) => {
       setTopStores(stores);
       setProducts(prods);
+      setCategories(cats.length > 0 ? cats : categoryGrid);
       setLoading(false);
     });
   }, []);
@@ -57,18 +63,22 @@ export default function LandingPage() {
           <div className="hidden lg:block rounded-xl border bg-card p-4">
             <h3 className="font-display font-semibold text-sm mb-3">Categories</h3>
             <div className="space-y-0.5">
-              {categoryGrid.slice(0, 11).map(({ name, icon: Icon, color, image }) => (
-                <button
-                  key={name}
-                  onClick={() => { setSearchQuery(name); navigate(`/search?q=${name}`); }}
-                  className="w-full flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-secondary transition text-left text-sm group"
-                >
-                  <div className="w-7 h-7 rounded-md overflow-hidden shrink-0">
-                    <img src={image} alt={name} className="w-full h-full object-cover" loading="lazy" />
-                  </div>
-                  <span className="group-hover:text-primary transition">{name}</span>
-                </button>
-              ))}
+              {categories.slice(0, 11).map((cat) => {
+                const iconInfo = categoryGrid.find(cg => cg.name === cat.name) || { icon: ArrowRight, color: 'bg-secondary text-foreground' };
+                const Icon = iconInfo.icon;
+                return (
+                  <button
+                    key={cat.id || cat.name}
+                    onClick={() => { setSearchQuery(cat.name); navigate(`/search?q=${cat.name}`); }}
+                    className="w-full flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-secondary transition text-left text-sm group"
+                  >
+                    <div className="w-7 h-7 rounded-md overflow-hidden shrink-0">
+                      <img src={cat.image} alt={cat.name} className="w-full h-full object-cover" loading="lazy" />
+                    </div>
+                    <span className="group-hover:text-primary transition">{cat.name}</span>
+                  </button>
+                );
+              })}
               <Link to="/search" className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-secondary transition text-sm text-primary font-medium mt-2">
                 <ArrowRight className="w-4 h-4" /> View All
               </Link>
@@ -90,16 +100,20 @@ export default function LandingPage() {
       {/* Categories Grid - Mobile */}
       <section className="container-main py-4 lg:hidden">
         <div className="grid grid-cols-4 gap-3">
-          {categoryGrid.map(({ name, icon: Icon, color, image }) => (
-            <button key={name} onClick={() => { setSearchQuery(name); navigate(`/search?q=${name}`); }}
-              className="flex flex-col items-center gap-1.5 py-3 rounded-xl hover:bg-secondary/60 transition relative overflow-hidden group">
-              <div className={`w-11 h-11 rounded-xl ${color} flex items-center justify-center overflow-hidden`}>
-                <img src={image} alt={name} className="w-full h-full object-cover opacity-60 group-hover:opacity-80 transition absolute inset-0" loading="lazy" />
-                <Icon className="w-5 h-5 relative z-10 drop-shadow" />
-              </div>
-              <span className="text-[10px] font-medium text-center leading-tight">{name}</span>
-            </button>
-          ))}
+          {categories.slice(0, 8).map((cat) => {
+            const iconInfo = categoryGrid.find(cg => cg.name === cat.name) || { icon: ArrowRight, color: 'bg-secondary text-foreground' };
+            const Icon = iconInfo.icon;
+            return (
+              <button key={cat.id || cat.name} onClick={() => { setSearchQuery(cat.name); navigate(`/search?q=${cat.name}`); }}
+                className="flex flex-col items-center gap-1.5 py-3 rounded-xl hover:bg-secondary/60 transition relative overflow-hidden group">
+                <div className={`w-11 h-11 rounded-xl ${iconInfo.color} flex items-center justify-center overflow-hidden`}>
+                  <img src={cat.image} alt={cat.name} className="w-full h-full object-cover opacity-60 group-hover:opacity-80 transition absolute inset-0" loading="lazy" />
+                  <Icon className="w-5 h-5 relative z-10 drop-shadow" />
+                </div>
+                <span className="text-[10px] font-medium text-center leading-tight">{cat.name}</span>
+              </button>
+            );
+          })}
         </div>
       </section>
 
@@ -203,12 +217,12 @@ export default function LandingPage() {
       <section className="container-main py-8">
         <h2 className="section-heading mb-6">Shop by Category</h2>
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-          {categoryGrid.slice(0, 8).map(({ name, image }) => (
-            <button key={name} onClick={() => { setSearchQuery(name); navigate(`/search?q=${name}`); }}
+          {categories.slice(0, 8).map((cat) => (
+            <button key={cat.id || cat.name} onClick={() => { setSearchQuery(cat.name); navigate(`/search?q=${cat.name}`); }}
               className="relative h-40 rounded-xl overflow-hidden group">
-              <img src={image} alt={name} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" loading="lazy" />
+              <img src={cat.image} alt={cat.name} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" loading="lazy" />
               <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent" />
-              <span className="absolute bottom-3 left-4 text-white font-display font-bold text-sm">{name}</span>
+              <span className="absolute bottom-3 left-4 text-white font-display font-bold text-sm">{cat.name}</span>
             </button>
           ))}
         </div>

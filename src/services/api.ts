@@ -18,6 +18,7 @@ import {
   djangoCart,
   djangoOrders,
   djangoAdmin,
+  djangoPayments,
 } from './django';
 import type {
   SearchFilters,
@@ -85,4 +86,8 @@ export const api = {
 
   // ─── Cart (Django-only; mock cart lives in zustand store) ────
   cart: useDjango ? djangoCart : null,
+
+  // ─── Payments ────────────────────────────────────────────────
+  createCheckoutSession: (cart: any, totalAmount: number) =>
+    useDjango ? djangoPayments.createCheckoutSession(cart, totalAmount) : Promise.resolve({ status: 'success', message: 'Simulated mock payment', checkout_url: 'http://127.0.0.1:8080/checkout/simulated' }),
 };

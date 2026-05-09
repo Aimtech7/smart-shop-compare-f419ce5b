@@ -35,7 +35,8 @@ export default function OrdersPage() {
       try {
         if (DJANGO_CONFIG.enabled) {
           const res = await djangoAdmin.orders();
-          const data = res.results || res.data?.results || res.data || [];
+          // Handle various response structures: {results: []}, {data: {results: []}}, {data: []}, or []
+          const data = res.results || res.data?.results || res.data || (Array.isArray(res) ? res : []);
           setOrders(Array.isArray(data) ? data : []);
         } else {
           // Mock orders
