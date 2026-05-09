@@ -900,36 +900,6 @@ export default function SellerDashboard() {
     </TabsContent>
   </Tabs>
 
-          {/* New Category Dialog */}
-          <Dialog open={catDialogOpen} onOpenChange={setCatDialogOpen}>
-            <DialogContent className="sm:max-w-[400px]">
-              <DialogHeader>
-                <DialogTitle>Add New Category</DialogTitle>
-              </DialogHeader>
-              <div className="space-y-4 py-4">
-                <div className="space-y-2">
-                  <Label htmlFor="catName">Category Name</Label>
-                  <Input 
-                    id="catName" 
-                    value={newCatName} 
-                    onChange={(e) => setNewCatName(e.target.value)}
-                    placeholder="e.g. Smart Home"
-                    onKeyDown={(e) => e.key === 'Enter' && handleCreateCategory()}
-                  />
-                </div>
-                <Button 
-                  className="w-full" 
-                  onClick={handleCreateCategory}
-                  disabled={catLoading || !newCatName.trim()}
-                >
-                  {catLoading ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
-                  Create Category
-                </Button>
-              </div>
-            </DialogContent>
-          </Dialog>
-        </div>
-      </div>
     </div>
   );
 }
