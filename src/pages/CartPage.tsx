@@ -65,8 +65,10 @@ export default function CartPage() {
       if (paymentMethod === 'card') {
         const session = await api.createCheckoutSession(cart, total + shipping);
         toast.info('Redirecting to secure checkout...');
-        // In a real app we'd redirect to session.checkout_url
-        // window.location.href = session.checkout_url;
+        if (session.checkout_url) {
+          window.location.href = session.checkout_url;
+          return; // Stop execution to let the browser redirect to Paystack
+        }
       }
       
       const order = await api.checkout(cart, data, paymentMethod, user?.id || 'guest');
