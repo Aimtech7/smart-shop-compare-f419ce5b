@@ -18,6 +18,8 @@ const ProductPage      = lazy(() => import("./pages/ProductPage"));
 const CartPage         = lazy(() => import("./pages/CartPage"));
 const SignupPage       = lazy(() => import("./pages/auth/SignupPage"));
 const LoginPage        = lazy(() => import("./pages/auth/LoginPage"));
+const VerifyEmailPage  = lazy(() => import("./pages/auth/VerifyEmailPage"));
+const ResetPasswordPage = lazy(() => import("./pages/auth/ResetPasswordPage"));
 const BuyerDashboard   = lazy(() => import("./pages/buyer/BuyerDashboard"));
 const SellerDashboard  = lazy(() => import("./pages/seller/SellerDashboard"));
 const BulkUploadPage   = lazy(() => import("./pages/seller/BulkUploadPage"));
@@ -99,6 +101,8 @@ function AppContent() {
                   <Route path="/cart" element={<CartPage />} />
                   <Route path="/auth/signup" element={<SignupPage />} />
                   <Route path="/auth/login" element={<LoginPage />} />
+                  <Route path="/auth/verify-email" element={<VerifyEmailPage />} />
+                  <Route path="/auth/reset-password" element={<ResetPasswordPage />} />
                   <Route path="/buyer" element={<ProtectedRoute allowedRoles={['buyer']}><BuyerDashboard /></ProtectedRoute>} />
                   <Route path="/seller" element={<ProtectedRoute allowedRoles={['seller']}><SellerDashboard /></ProtectedRoute>} />
                   <Route path="/seller/bulk-upload" element={<ProtectedRoute allowedRoles={['seller']}><Suspense fallback={<PageLoader />}><BulkUploadPage /></Suspense></ProtectedRoute>} />

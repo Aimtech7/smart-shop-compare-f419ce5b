@@ -62,17 +62,15 @@ export default function CartPage() {
   const onCheckout = async (data: any) => {
     setOrderLoading(true);
     try {
-      if (paymentMethod === 'card') {
-        const session = await api.createCheckoutSession(cart, total + shipping);
+      const order = await api.checkout(cart, data, paymentMethod, user?.id || 'guest');
+      
+      if (paymentMethod === 'card' && order.checkout_url) {
         toast.info('Redirecting to secure checkout...');
-        if (session.checkout_url) {
-          window.location.href = session.checkout_url;
-          return; // Stop execution to let the browser redirect to Paystack
-        }
+        window.location.href = order.checkout_url;
+        return; // Stop execution to let the browser redirect to Paystack
       }
       
-      const order = await api.checkout(cart, data, paymentMethod, user?.id || 'guest');
-      setOrderId(order.id);
+      setOrderId(order.data?.id || order.id);
       clearCart();
       setStep('confirmation');
       toast.success('Order placed successfully!');
