@@ -9,16 +9,7 @@ import { api } from '@/services/api';
 import { toast } from 'sonner';
 import type { Order } from '@/types';
 
-const mockWishlist = [
-  { id: '2', name: 'MacBook Pro 16" M3 Max', price: 3399, store: 'AppleZone', category: 'Electronics' },
-  { id: '6', name: 'iPad Air M2', price: 599, store: 'AppleZone', category: 'Electronics' },
-  { id: '4', name: 'Nike Air Max 270', price: 150, store: 'SneakerSpot', category: 'Fashion' },
-];
-
-const mockReviews = [
-  { id: 'r1', productName: 'Samsung Galaxy S24 Ultra', rating: 5, comment: 'Amazing phone!', date: '2024-03-01' },
-  { id: 'r2', productName: 'Sony WH-1000XM5', rating: 4, comment: 'Excellent noise cancellation.', date: '2024-02-20' },
-];
+// Stats will be derived from live state
 
 const statusConfig = {
   pending: { icon: ShoppingBag, label: 'Pending', color: 'text-warning' },
@@ -31,15 +22,22 @@ const statusConfig = {
 export default function BuyerDashboard() {
   const { user } = useStore();
   const [orders, setOrders] = useState<Order[]>([]);
+  const [wishlist, setWishlist] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     setLoading(true);
     setError(null);
-    api.getOrders(user?.id)
-      .then(setOrders)
-      .catch(err => setError(err.message || 'Failed to load orders'))
+    Promise.all([
+      api.getOrders(user?.id),
+      api.wishlist.get().catch(() => [])
+    ])
+      .then(([ordersRes, wishlistRes]) => {
+        setOrders(ordersRes);
+        setWishlist(wishlistRes);
+      })
+      .catch(err => setError(err.message || 'Failed to load dashboard data'))
       .finally(() => setLoading(false));
   }, [user?.id]);
 
@@ -69,8 +67,8 @@ export default function BuyerDashboard() {
       <div className="grid grid-cols-3 gap-4 mb-8">
         {[
           { icon: ShoppingBag, label: 'Orders', value: orders.length, color: 'text-primary' },
-          { icon: Star, label: 'Reviews', value: mockReviews.length, color: 'text-star' },
-          { icon: Heart, label: 'Wishlist', value: mockWishlist.length, color: 'text-destructive' },
+          { icon: Star, label: 'Reviews', value: 0, color: 'text-star' }, // Placeholder until reviews API is integrated
+          { icon: Heart, label: 'Wishlist', value: wishlist.length, color: 'text-destructive' },
         ].map(({ icon: Icon, label, value, color }) => (
           <div key={label} className="rounded-xl border bg-card p-4 text-center">
             <Icon className={`w-5 h-5 ${color} mx-auto mb-1`} />
@@ -153,41 +151,30 @@ export default function BuyerDashboard() {
         </TabsContent>
 
         <TabsContent value="reviews" className="space-y-3">
-          {mockReviews.length === 0 ? (
-            <div className="text-center py-12">
-              <Star className="w-12 h-12 text-muted-foreground/20 mx-auto mb-3" />
-              <p className="font-medium">No reviews yet</p>
-              <p className="text-sm text-muted-foreground mt-1">Purchase and review products to see them here.</p>
-            </div>
-          ) : (
-            mockReviews.map(review => (
-              <div key={review.id} className="rounded-xl border bg-card p-5">
-                <p className="font-medium text-sm mb-1">{review.productName}</p>
-                <div className="flex items-center gap-0.5 mb-2">
-                  {Array.from({ length: 5 }).map((_, i) => (
-                    <Star key={i} className={`w-4 h-4 ${i < review.rating ? 'fill-star text-star' : 'text-muted'}`} />
-                  ))}
-                </div>
-                <p className="text-sm text-muted-foreground">{review.comment}</p>
-                <p className="text-xs text-muted-foreground mt-2">{new Date(review.date).toLocaleDateString()}</p>
-              </div>
-            ))
-          )}
+          {/* Reviews tab - currently empty until backend implementation */}
+          <div className="text-center py-12">
+            <Star className="w-12 h-12 text-muted-foreground/20 mx-auto mb-3" />
+            <p className="font-medium">No reviews yet</p>
+            <p className="text-sm text-muted-foreground mt-1">Purchase and review products to see them here.</p>
+          </div>
         </TabsContent>
 
         <TabsContent value="wishlist" className="space-y-3">
-          {mockWishlist.length === 0 ? (
+          {wishlist.length === 0 ? (
             <div className="text-center py-12">
               <Heart className="w-12 h-12 text-muted-foreground/20 mx-auto mb-3" />
               <p className="font-medium">Wishlist is empty</p>
               <p className="text-sm text-muted-foreground mt-1">Save items you love to find them easily later.</p>
             </div>
           ) : (
-            mockWishlist.map(item => (
+            wishlist.map(item => (
               <Link key={item.id} to={`/product/${item.id}`} className="rounded-xl border bg-card p-4 flex items-center justify-between card-hover block">
-                <div>
-                  <p className="font-medium text-sm">{item.name}</p>
-                  <p className="text-xs text-muted-foreground">{item.category} · {item.store}</p>
+                <div className="flex items-center gap-3">
+                  {item.image && <img src={item.image} alt={item.name} className="w-10 h-10 rounded object-cover" />}
+                  <div>
+                    <p className="font-medium text-sm">{item.name}</p>
+                    <p className="text-xs text-muted-foreground">{item.categoryName || item.category} · {item.storeName || item.sellerName}</p>
+                  </div>
                 </div>
                 <span className="font-display font-bold text-primary">${item.price}</span>
               </Link>

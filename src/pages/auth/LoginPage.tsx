@@ -21,9 +21,7 @@ type LoginForm = z.infer<typeof loginSchema>;
 
 export default function LoginPage() {
   const [loading, setLoading] = useState(false);
-  const [forgotMode, setForgotMode] = useState(false);
-  const [forgotEmail, setForgotEmail] = useState('');
-  const { signIn, resetPassword } = useAuth();
+  const { signIn } = useAuth();
   const { user, isAuthenticated } = useStore();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
@@ -55,16 +53,6 @@ export default function LoginPage() {
     }
   };
 
-  const handleForgotPassword = async () => {
-    if (!forgotEmail) { toast.error('Enter your email'); return; }
-    try {
-      await resetPassword(forgotEmail);
-      toast.success('Password reset email sent! Check your inbox.');
-      setForgotMode(false);
-    } catch (err: any) {
-      toast.error(err?.message || 'Failed to send reset email');
-    }
-  };
 
   return (
     <div className="min-h-screen flex items-center justify-center p-4 relative overflow-hidden">
@@ -80,24 +68,12 @@ export default function LoginPage() {
           <p className="text-sm text-muted-foreground mt-1">{isSeller ? 'Login to your seller account' : 'Login to your account'}</p>
         </div>
 
-        {forgotMode ? (
-          <div className="space-y-4 bg-card p-6 rounded-xl border">
-            <h2 className="font-display font-semibold text-lg">Reset Password</h2>
-            <p className="text-sm text-muted-foreground">Enter your email and we'll send you a reset link.</p>
-            <div>
-              <Label htmlFor="forgot-email">Email</Label>
-              <Input id="forgot-email" type="email" value={forgotEmail} onChange={e => setForgotEmail(e.target.value)} />
-            </div>
-            <Button className="w-full" onClick={handleForgotPassword}>Send Reset Link</Button>
-            <button onClick={() => setForgotMode(false)} className="text-sm text-primary hover:underline w-full text-center">Back to Login</button>
-          </div>
-        ) : (
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 bg-card p-6 rounded-xl border">
             <div><Label htmlFor="email">Email</Label><Input id="email" type="email" {...register('email')} />{errors.email && <p className="text-xs text-destructive mt-1">{errors.email.message}</p>}</div>
             <div><Label htmlFor="password">Password</Label><Input id="password" type="password" {...register('password')} />{errors.password && <p className="text-xs text-destructive mt-1">{errors.password.message}</p>}</div>
 
             <div className="flex justify-end">
-              <button type="button" onClick={() => setForgotMode(true)} className="text-xs text-primary hover:underline">Forgot password?</button>
+              <Link to="/auth/forgot-password" title="Forgot Password" className="text-xs text-primary hover:underline">Forgot password?</Link>
             </div>
 
             <Button type="submit" className="w-full" disabled={loading}>
@@ -106,7 +82,7 @@ export default function LoginPage() {
 
             <p className="text-center text-sm text-muted-foreground">Don't have an account? <Link to={`/auth/signup${isSeller ? '?role=seller' : ''}`} className="text-primary font-medium hover:underline">Sign Up</Link></p>
           </form>
-        )}
+        </div>
       </div>
     </div>
   );

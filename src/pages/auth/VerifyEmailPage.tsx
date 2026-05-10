@@ -4,13 +4,14 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { CheckCircle2, XCircle, Loader2 } from "lucide-react";
 import { toast } from "sonner";
+import { useAuth } from "@/hooks/useAuth";
 
 export default function VerifyEmailPage() {
   const [searchParams] = useSearchParams();
   const [status, setStatus] = useState<"loading" | "success" | "error">("loading");
   const [message, setMessage] = useState("");
   const key = searchParams.get("key");
-  const navigate = useNavigate();
+  const { verifyEmail } = useAuth();
 
   useEffect(() => {
     const verify = async () => {
@@ -21,24 +22,13 @@ export default function VerifyEmailPage() {
       }
 
       try {
-        const response = await fetch(`${import.meta.env.VITE_API_URL}/v1/auth/registration/verify-email/`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ key }),
-        });
-
-        if (response.ok) {
-          setStatus("success");
-          setMessage("Your email has been verified! You can now log in to your account.");
-          toast.success("Email verified successfully");
-        } else {
-          const data = await response.json();
-          setStatus("error");
-          setMessage(data.detail || "Invalid or expired verification link.");
-        }
-      } catch (error) {
+        await verifyEmail(key);
+        setStatus("success");
+        setMessage("Your email has been verified! You can now log in to your account.");
+        toast.success("Email verified successfully");
+      } catch (error: any) {
         setStatus("error");
-        setMessage("Something went wrong. Please try again later.");
+        setMessage(error.message || "Invalid or expired verification link.");
       }
     };
 

@@ -49,7 +49,7 @@ export function useAuth() {
     businessName?: string;
   }) => {
     if (useDjango) {
-      const { user } = await djangoAuth.register({
+      const res = await djangoAuth.register({
         email: data.email,
         password: data.password,
         password_confirm: data.password,
@@ -58,10 +58,14 @@ export function useAuth() {
         role: data.role,
         business_name: data.businessName,
       });
-      setUser(user);
-      return { user };
+      if (res.user && res.access) {
+        setUser(res.user);
+      }
+      return res;
     }
-    return await mockAuth.signUp(data);
+    const res = await mockAuth.signUp(data);
+    setUser(res.user);
+    return res;
   };
 
   const signIn = async (email: string, password: string) => {
@@ -89,11 +93,25 @@ export function useAuth() {
 
   const resetPassword = async (email: string) => {
     if (useDjango) {
-      // Implement when Django endpoint is ready: POST /auth/password-reset/
-      throw new Error('Password reset not yet wired to Django backend');
+      return await djangoAuth.requestPasswordReset(email);
     }
     await mockAuth.resetPassword(email);
   };
 
-  return { loading, signUp, signIn, signOut, resetPassword };
+  const confirmPasswordReset = async (payload: any) => {
+    if (useDjango) {
+      return await djangoAuth.confirmPasswordReset(payload);
+    }
+    // Mock doesn't have confirm logic currently
+    return { detail: "Password reset mock successful" };
+  };
+
+  const verifyEmail = async (key: string) => {
+    if (useDjango) {
+      return await djangoAuth.verifyEmail(key);
+    }
+    return { detail: "Email verified mock successful" };
+  };
+
+  return { loading, signUp, signIn, signOut, resetPassword, confirmPasswordReset, verifyEmail };
 }

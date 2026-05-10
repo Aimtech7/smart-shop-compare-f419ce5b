@@ -34,12 +34,22 @@ export interface AuthResponse {
 export const djangoAuth = {
   login: async (payload: LoginPayload) => {
     const res = await http.post<AuthResponse>('/auth/login/', payload);
-    return { user: res.data.user };
+    return {
+      user: res.data.user,
+      access: res.data.access,
+      refresh: res.data.refresh,
+      message: res.message
+    };
   },
 
   register: async (payload: RegisterPayload) => {
     const res = await http.post<AuthResponse>('/auth/register/', payload);
-    return { user: res.data.user };
+    return {
+      user: res.data.user,
+      access: res.data?.access,
+      refresh: res.data?.refresh,
+      message: res.message
+    };
   },
 
   logout: () => http.post<void>('/auth/logout/'),
@@ -47,4 +57,13 @@ export const djangoAuth = {
   refresh: () => http.post<{ ok: true }>('/auth/refresh/'),
 
   me: () => http.get<User>('/auth/me/'),
+  
+  requestPasswordReset: (email: string) => 
+    http.post<{ detail: string }>('/auth/password/reset/', { email }),
+  
+  confirmPasswordReset: (payload: any) => 
+    http.post<{ detail: string }>('/auth/password/reset/confirm/', payload),
+
+  verifyEmail: (key: string) =>
+    http.post<{ detail: string }>('/auth/registration/verify-email/', { key }),
 };

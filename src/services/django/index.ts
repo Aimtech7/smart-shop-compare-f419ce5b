@@ -6,3 +6,5 @@ export { djangoOrders } from './orders';
 export { djangoSeller } from './seller';
 export { djangoAdmin } from './admin';
 export { djangoPayments } from './payments';
+export { djangoAI } from './ai';
+export { djangoWishlist } from './wishlist';

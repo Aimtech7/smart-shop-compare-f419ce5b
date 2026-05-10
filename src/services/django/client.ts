@@ -10,7 +10,7 @@
 
 export const DJANGO_CONFIG = {
   baseUrl: import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api/v1',
-  enabled: import.meta.env.VITE_USE_DJANGO_API === 'true',
+  enabled: import.meta.env.VITE_ENVIRONMENT === 'production' || import.meta.env.VITE_USE_DJANGO_API === 'true',
 };
 
 // Helper to get the backend root (e.g., http://localhost:8000) for media files
@@ -125,11 +125,23 @@ export async function apiFetch<T = unknown>(
       ? await res.json().catch(() => null)
       : await res.text().catch(() => null);
 
-    const message =
-      (data && typeof data === 'object' && (data as any).detail) ||
-      (data && typeof data === 'object' && (data as any).message) ||
-      (typeof data === 'string' ? data : null) ||
-      `Request failed with status ${res.status}`;
+    let message = 'An error occurred';
+    if (data && typeof data === 'object') {
+      const d = data as any;
+      if (d.detail) message = d.detail;
+      else if (d.message) message = d.message;
+      else if (d.non_field_errors) message = d.non_field_errors[0];
+      else {
+        // Handle DRF field-level errors: { "email": ["error"], ... }
+        const firstKey = Object.keys(d)[0];
+        if (Array.isArray(d[firstKey])) {
+          message = `${firstKey}: ${d[firstKey][0]}`;
+        }
+      }
+    } else if (typeof data === 'string') {
+      message = data;
+    }
+
     throw new ApiError(res.status, message, data);
   }
 

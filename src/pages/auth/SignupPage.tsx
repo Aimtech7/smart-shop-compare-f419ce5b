@@ -52,7 +52,7 @@ export default function SignupPage() {
   const onSubmit = async (data: SellerForm) => {
     setLoading(true);
     try {
-      await signUp({
+      const res = await signUp({
         email: data.email,
         password: data.password,
         fullName: data.fullName,
@@ -60,8 +60,15 @@ export default function SignupPage() {
         role: role as UserRole,
         businessName: data.businessName,
       });
-      toast.success('Account created and logged in!');
-      navigate('/');
+
+      if (!res.access) {
+        // Verification is mandatory
+        setShowVerification(true);
+        toast.info(res.message || 'Please verify your email.');
+      } else {
+        toast.success('Account created and logged in!');
+        navigate('/');
+      }
     } catch (err: any) {
       toast.error(err?.message || 'Signup failed. Please try again.');
     } finally {

@@ -19,6 +19,7 @@ const CartPage         = lazy(() => import("./pages/CartPage"));
 const SignupPage       = lazy(() => import("./pages/auth/SignupPage"));
 const LoginPage        = lazy(() => import("./pages/auth/LoginPage"));
 const VerifyEmailPage  = lazy(() => import("./pages/auth/VerifyEmailPage"));
+const ForgotPasswordPage = lazy(() => import("./pages/auth/ForgotPasswordPage"));
 const ResetPasswordPage = lazy(() => import("./pages/auth/ResetPasswordPage"));
 const BuyerDashboard   = lazy(() => import("./pages/buyer/BuyerDashboard"));
 const SellerDashboard  = lazy(() => import("./pages/seller/SellerDashboard"));
@@ -102,6 +103,7 @@ function AppContent() {
                   <Route path="/auth/signup" element={<SignupPage />} />
                   <Route path="/auth/login" element={<LoginPage />} />
                   <Route path="/auth/verify-email" element={<VerifyEmailPage />} />
+                  <Route path="/auth/forgot-password" element={<ForgotPasswordPage />} />
                   <Route path="/auth/reset-password" element={<ResetPasswordPage />} />
                   <Route path="/buyer" element={<ProtectedRoute allowedRoles={['buyer']}><BuyerDashboard /></ProtectedRoute>} />
                   <Route path="/seller" element={<ProtectedRoute allowedRoles={['seller']}><SellerDashboard /></ProtectedRoute>} />

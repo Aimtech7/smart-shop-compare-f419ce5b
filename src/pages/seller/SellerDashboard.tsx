@@ -16,7 +16,6 @@ import {
 import { ComboboxInput } from '@/components/ComboboxInput';
 import { api } from '@/services/api';
 import { djangoSeller, http } from '@/services/django';
-import { DJANGO_CONFIG } from '@/services/django/client';
 import { toast } from 'sonner';
 import { generateProductCode, MAKES, TYPES } from '@/lib/productCode';
 import type { Product, StoreListing } from '@/types';
@@ -112,11 +111,9 @@ export default function SellerDashboard() {
   useEffect(() => {
     async function loadCategories() {
       try {
-        if (DJANGO_CONFIG.enabled) {
-          const res = await http.get<any>('/products/categories/');
-          const data = Array.isArray(res) ? res : res.results || res.data || [];
-          setCategories(data);
-        }
+        const res = await http.get<any>('/products/categories/');
+        const data = Array.isArray(res) ? res : res.results || res.data || [];
+        setCategories(data);
       } catch {
         // Fall back to empty — user can still type category name
       }
@@ -135,17 +132,9 @@ export default function SellerDashboard() {
     }
     setAiLoading(true);
     try {
-      if (DJANGO_CONFIG.enabled) {
-        const res = await http.post<any>('/products/ai-describe/', { make, type, model, specs });
-        setValue('description', res.description);
-        toast.success('✨ Description generated!');
-      } else {
-        setTimeout(() => {
-          const desc = generateAIDescription(make, type, model, specs);
-          setValue('description', desc);
-          toast.success('✨ Description generated!');
-        }, 800);
-      }
+      const res = await http.post<any>('/products/ai-describe/', { make, type, model, specs });
+      setValue('description', res.description);
+      toast.success('✨ Description generated!');
     } catch {
       toast.error('Failed to generate description');
     } finally {
@@ -212,35 +201,27 @@ export default function SellerDashboard() {
   useEffect(() => {
     const load = async () => {
       try {
-        if (DJANGO_CONFIG.enabled) {
-          const [p, d, o, a] = await Promise.all([
-            djangoSeller.products(),
-            djangoSeller.dashboard(),
-            djangoSeller.orders(),
-            djangoSeller.analytics().catch(() => null),
-          ]);
-          setProducts(
-            (p as any[]).map((prod) => ({
-              ...prod,
-              listings: (prod as any).listings ?? [],
-            })) as (Product & { listings: StoreListing[] })[]
-          );
-          setMetrics({
-            totalProducts: d.totalProducts ?? 0,
-            totalOrders: d.totalOrders ?? 0,
-            revenue: d.revenue ?? 0,
-            pendingOrders: d.pendingOrders ?? 0,
-          });
-          setOrders(o || []);
-          setAnalytics(a);
-        } else {
-          const [p, m] = await Promise.all([
-            api.getSellerProducts('s1'),
-            api.getSellerMetrics(),
-          ]);
-          setProducts(p);
-          setMetrics(m);
-        }
+      try {
+        const [p, d, o, a] = await Promise.all([
+          djangoSeller.products(),
+          djangoSeller.dashboard(),
+          djangoSeller.orders(),
+          djangoSeller.analytics().catch(() => null),
+        ]);
+        setProducts(
+          (p as any[]).map((prod) => ({
+            ...prod,
+            listings: (prod as any).listings ?? [],
+          })) as (Product & { listings: StoreListing[] })[]
+        );
+        setMetrics({
+          totalProducts: d.totalProducts ?? 0,
+          totalOrders: d.totalOrders ?? 0,
+          revenue: d.revenue ?? 0,
+          pendingOrders: d.pendingOrders ?? 0,
+        });
+        setOrders(o || []);
+        setAnalytics(a);
       } catch (err) {
         console.error('Failed to load seller dashboard:', err);
         toast.error('Failed to load dashboard data');
@@ -365,17 +346,12 @@ export default function SellerDashboard() {
   };
 
   const deleteProduct = async (id: string) => {
-    if (DJANGO_CONFIG.enabled) {
-      try {
-        await djangoSeller.deleteProduct(id);
-        setProducts(products.filter(p => p.id !== id));
-        toast.success('Product deleted');
-      } catch (err) {
-        toast.error('Failed to delete product');
-      }
-    } else {
+    try {
+      await djangoSeller.deleteProduct(id);
       setProducts(products.filter(p => p.id !== id));
       toast.success('Product deleted');
+    } catch (err) {
+      toast.error('Failed to delete product');
     }
   };
 

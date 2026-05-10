@@ -6,22 +6,24 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Lock, CheckCircle2, Loader2, ArrowLeft } from "lucide-react";
 import { toast } from "sonner";
+import { useAuth } from "@/hooks/useAuth";
 
 export default function ResetPasswordPage() {
   const [searchParams] = useSearchParams();
+  const uid = searchParams.get("uid");
+  const token = searchParams.get("token");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [status, setStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
   const [message, setMessage] = useState("");
   
-  const key = searchParams.get("key");
-  const navigate = useNavigate();
+  const { confirmPasswordReset } = useAuth();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!key) {
-      toast.error("Invalid or missing reset token.");
+    if (!uid || !token) {
+      toast.error("Invalid or missing reset token. Please request a new one.");
       return;
     }
 
@@ -37,27 +39,17 @@ export default function ResetPasswordPage() {
 
     setStatus("loading");
     try {
-      const response = await fetch(`${import.meta.env.VITE_API_URL}/v1/auth/password/reset/confirm/`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          uid: key.split('-')[0], // Note: Adjust if your backend logic for 'key' differs
-          token: key,
-          new_password: password,
-        }),
+      await confirmPasswordReset({
+        uid: uid,
+        token: token,
+        new_password1: password,
+        new_password2: confirmPassword,
       });
-
-      if (response.ok) {
-        setStatus("success");
-        toast.success("Password reset successfully!");
-      } else {
-        const data = await response.json();
-        setStatus("error");
-        setMessage(data.detail || "Failed to reset password. The link may have expired.");
-      }
-    } catch (error) {
+      setStatus("success");
+      toast.success("Password reset successfully!");
+    } catch (error: any) {
       setStatus("error");
-      setMessage("Something went wrong. Please try again.");
+      setMessage(error.message || "Failed to reset password. The link may have expired.");
     }
   };
 

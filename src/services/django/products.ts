@@ -25,10 +25,13 @@ export const djangoProducts = {
     const res = await http.get<any>(
       `/products/${toQuery(params as Record<string, unknown>)}`
     );
-    const data = Array.isArray(res) ? res : (res?.results || []);
+    const data = Array.isArray(res) ? res : (res?.data || res?.results || []);
     return data.map((p: any) => ({
       ...p,
-      images: p.images ? p.images.map((img: any) => fixImageUrl(img.image)) : [],
+      sku: p.SKU || p.sku,
+      createdAt: p.created_at || p.createdAt,
+      updatedAt: p.updated_at || p.updatedAt,
+      images: p.images ? p.images.map((img: any) => typeof img === 'string' ? fixImageUrl(img) : fixImageUrl(img.image)) : [],
       category: p.category_name || p.category,
       listings: p.listings || [{
         id: p.id,
@@ -43,10 +46,14 @@ export const djangoProducts = {
     }));
   },
   get: async (id: string) => {
-    const p = await http.get<any>(`/products/${id}/`);
+    const res = await http.get<any>(`/products/${id}/`);
+    const p = res.data || res;
     return {
       ...p,
-      images: p.images ? p.images.map((img: any) => fixImageUrl(img.image)) : [],
+      sku: p.SKU || p.sku,
+      createdAt: p.created_at || p.createdAt,
+      updatedAt: p.updated_at || p.updatedAt,
+      images: p.images ? p.images.map((img: any) => typeof img === 'string' ? fixImageUrl(img) : fixImageUrl(img.image)) : [],
       category: p.category_name || p.category,
       listings: p.listings || [{
         id: p.id,

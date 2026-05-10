@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { persist } from 'zustand/middleware';
 import type { User, CartItem } from '@/types';
 
 interface AppState {
@@ -22,11 +23,13 @@ interface AppState {
   setSearchQuery: (query: string) => void;
 }
 
-export const useStore = create<AppState>((set, get) => ({
-  user: null,
-  isAuthenticated: false,
-  setUser: (user) => set({ user, isAuthenticated: !!user }),
-  logout: () => set({ user: null, isAuthenticated: false, cart: [] }),
+export const useStore = create<AppState>()(
+  persist(
+    (set, get) => ({
+      user: null,
+      isAuthenticated: false,
+      setUser: (user) => set({ user, isAuthenticated: !!user }),
+      logout: () => set({ user: null, isAuthenticated: false, cart: [] }),
 
   cart: [],
   addToCart: (item) => {
@@ -55,4 +58,9 @@ export const useStore = create<AppState>((set, get) => ({
 
   searchQuery: '',
   setSearchQuery: (query) => set({ searchQuery: query }),
-}));
+    }),
+    {
+      name: 'tha-buyer-storage',
+    }
+  )
+);
