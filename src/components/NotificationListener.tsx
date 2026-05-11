@@ -7,7 +7,7 @@ export const NotificationListener = () => {
   const { user } = useAuthStore();
 
   useEffect(() => {
-    if (!DJANGO_CONFIG.enabled || !user) return;
+    if (!user) return;
 
     // Determine WS base URL from environment or fallback to dynamic construction
     const envWsBase = import.meta.env.VITE_WS_BASE_URL;

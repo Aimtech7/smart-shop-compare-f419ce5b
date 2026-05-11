@@ -33,16 +33,7 @@ export const djangoProducts = {
       updatedAt: p.updated_at || p.updatedAt,
       images: p.images ? p.images.map((img: any) => typeof img === 'string' ? fixImageUrl(img) : fixImageUrl(img.image)) : [],
       category: p.category_name || p.category,
-      listings: p.listings || [{
-        id: p.id,
-        productId: p.id,
-        sellerId: p.seller,
-        storeName: p.seller_business || p.seller_name || 'Unknown Store',
-        price: parseFloat(p.price) || 0,
-        stock: p.stock_qty || 0,
-        sellerRating: parseFloat(p.avg_rating) || 4.5,
-        isLowestPrice: true
-      }]
+      listings: p.listings || []
     }));
   },
   get: async (id: string) => {
@@ -55,16 +46,7 @@ export const djangoProducts = {
       updatedAt: p.updated_at || p.updatedAt,
       images: p.images ? p.images.map((img: any) => typeof img === 'string' ? fixImageUrl(img) : fixImageUrl(img.image)) : [],
       category: p.category_name || p.category,
-      listings: p.listings || [{
-        id: p.id,
-        productId: p.id,
-        sellerId: p.seller,
-        storeName: p.seller_business || p.seller_name || 'Unknown Store',
-        price: parseFloat(p.price) || 0,
-        stock: p.stock_qty || 0,
-        sellerRating: parseFloat(p.avg_rating) || 4.5,
-        isLowestPrice: true
-      }]
+      listings: p.listings || []
     } as Product & { listings: StoreListing[] };
   },
   listings: (productId: string) =>

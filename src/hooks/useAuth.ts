@@ -1,6 +1,5 @@
 import { useEffect, useState } from 'react';
 import { useStore } from '@/store/useStore';
-import { mockAuth } from '@/services/mock/mockAuth';
 import { djangoAuth, DJANGO_CONFIG, ApiError } from '@/services/django';
 import type { UserRole } from '@/types';
 
@@ -14,25 +13,16 @@ export function useAuth() {
     let unsubscribe: (() => void) | undefined;
 
     const init = async () => {
-      if (useDjango) {
-        try {
-          const user = await djangoAuth.me();
-          if (user) setUser(user);
-        } catch {
-          // not authenticated — fine
-        }
-        // Global 401 handler — log the user out cleanly
-        const onUnauth = () => storeLogout();
-        window.addEventListener('auth:unauthorized', onUnauth);
-        unsubscribe = () => window.removeEventListener('auth:unauthorized', onUnauth);
-      } else {
-        const session = mockAuth.getSession();
-        if (session?.user) setUser(session.user);
-        unsubscribe = mockAuth.onAuthStateChange((user) => {
-          if (user) setUser(user);
-          else storeLogout();
-        });
+      try {
+        const user = await djangoAuth.me();
+        if (user) setUser(user);
+      } catch {
+        // not authenticated — fine
       }
+      // Global 401 handler — log the user out cleanly
+      const onUnauth = () => storeLogout();
+      window.addEventListener('auth:unauthorized', onUnauth);
+      unsubscribe = () => window.removeEventListener('auth:unauthorized', onUnauth);
       setLoading(false);
     };
 
@@ -48,69 +38,44 @@ export function useAuth() {
     role: UserRole;
     businessName?: string;
   }) => {
-    if (useDjango) {
-      const res = await djangoAuth.register({
-        email: data.email,
-        password: data.password,
-        password_confirm: data.password,
-        name: data.fullName,
-        phone: data.phone,
-        role: data.role,
-        business_name: data.businessName,
-      });
-      if (res.user && res.access) {
-        setUser(res.user);
-      }
-      return res;
+    const res = await djangoAuth.register({
+      email: data.email,
+      password: data.password,
+      password_confirm: data.password,
+      name: data.fullName,
+      phone: data.phone,
+      role: data.role,
+      business_name: data.businessName,
+    });
+    if (res.user && res.access) {
+      setUser(res.user);
     }
-    const res = await mockAuth.signUp(data);
-    setUser(res.user);
     return res;
   };
 
   const signIn = async (email: string, password: string) => {
-    if (useDjango) {
-      const { user } = await djangoAuth.login({ email, password });
-      setUser(user);
-      return { user };
-    }
-    const { user } = await mockAuth.signIn(email, password);
+    const { user } = await djangoAuth.login({ email, password });
     setUser(user);
     return { user };
   };
 
   const signOut = async () => {
-    if (useDjango) {
-      try { await djangoAuth.logout(); } catch (e) {
-        if (!(e instanceof ApiError) || e.status !== 401) throw e;
-      }
-      storeLogout();
-      return;
+    try { await djangoAuth.logout(); } catch (e) {
+      if (!(e instanceof ApiError) || e.status !== 401) throw e;
     }
-    await mockAuth.signOut();
     storeLogout();
   };
 
   const resetPassword = async (email: string) => {
-    if (useDjango) {
-      return await djangoAuth.requestPasswordReset(email);
-    }
-    await mockAuth.resetPassword(email);
+    return await djangoAuth.requestPasswordReset(email);
   };
 
   const confirmPasswordReset = async (payload: any) => {
-    if (useDjango) {
-      return await djangoAuth.confirmPasswordReset(payload);
-    }
-    // Mock doesn't have confirm logic currently
-    return { detail: "Password reset mock successful" };
+    return await djangoAuth.confirmPasswordReset(payload);
   };
 
   const verifyEmail = async (key: string) => {
-    if (useDjango) {
-      return await djangoAuth.verifyEmail(key);
-    }
-    return { detail: "Email verified mock successful" };
+    return await djangoAuth.verifyEmail(key);
   };
 
   return { loading, signUp, signIn, signOut, resetPassword, confirmPasswordReset, verifyEmail };

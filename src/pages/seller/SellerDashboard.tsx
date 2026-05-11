@@ -201,7 +201,6 @@ export default function SellerDashboard() {
   useEffect(() => {
     const load = async () => {
       try {
-      try {
         const [p, d, o, a] = await Promise.all([
           djangoSeller.products(),
           djangoSeller.dashboard(),
@@ -262,79 +261,53 @@ export default function SellerDashboard() {
     const fullDescription = `${data.description}\n\nMake: ${data.make} | Type: ${data.type} | Model: ${data.model}${data.specs ? ` | Specs: ${data.specs}` : ''}`;
 
     try {
-      if (DJANGO_CONFIG.enabled) {
-        const formData = new FormData();
-        formData.append('name', data.name);
-        formData.append('description', fullDescription);
-        // Send category UUID if we have it, otherwise send name (Django will handle)
-        const catMatch = categories.find(c => c.name.toLowerCase() === data.category.toLowerCase());
-        if (catMatch) {
-          formData.append('category', catMatch.id);
-        } else {
-          formData.append('category', data.category);
-        }
-        formData.append('price', data.price);
-        formData.append('stock_qty', data.stock);
-        formData.append('delivery_days', '3');
-        formData.append('SKU', code);
-        
-        const fileInput = document.getElementById('product-images') as HTMLInputElement;
-        if (fileInput && fileInput.files) {
-          for (let i = 0; i < fileInput.files.length; i++) {
-            formData.append('uploaded_images', fileInput.files[i]);
-          }
-        }
-
-        if (editingProduct) {
-          await djangoSeller.updateProduct(editingProduct.id, formData);
-          toast.success(`Product updated! Code: ${code}`);
-        } else {
-          await djangoSeller.createProduct(formData);
-          toast.success(`Product added! Code: ${code}`);
-        }
-        
-        // Refresh products
-        const [p, d] = await Promise.all([
-          djangoSeller.products(),
-          djangoSeller.dashboard(),
-        ]);
-        setProducts(
-          (p as any[]).map((prod) => ({
-            ...prod,
-            listings: (prod as any).listings ?? [],
-          })) as (Product & { listings: StoreListing[] })[]
-        );
-        setMetrics({
-          totalProducts: d.totalProducts ?? 0,
-          totalOrders: d.totalOrders ?? 0,
-          revenue: d.revenue ?? 0,
-          pendingOrders: d.pendingOrders ?? 0,
-        });
+      const formData = new FormData();
+      formData.append('name', data.name);
+      formData.append('description', fullDescription);
+      // Send category UUID if we have it, otherwise send name (Django will handle)
+      const catMatch = categories.find(c => c.name.toLowerCase() === data.category.toLowerCase());
+      if (catMatch) {
+        formData.append('category', catMatch.id);
       } else {
-        // Mock fallback
-        if (editingProduct) {
-          setProducts(products.map(p => p.id === editingProduct.id
-            ? { ...p, name: data.name, description: data.description, category: data.category, sku: code }
-            : p));
-          toast.success(`Product updated! Code: ${code}`);
-        } else {
-          const newProd: Product & { listings: StoreListing[] } = {
-            id: `p-${Date.now()}`,
-            name: data.name,
-            description: fullDescription,
-            category: data.category,
-            images: [],
-            sku: code,
-            createdAt: new Date().toISOString(),
-            listings: [{
-              id: `l-${Date.now()}`, productId: `p-${Date.now()}`, sellerId: 's1',
-              storeName: 'My Store', price: Number(data.price), stock: Number(data.stock), sellerRating: 4.5,
-            }],
-          };
-          setProducts([newProd, ...products]);
-          toast.success(`Product added! Code: ${code}`);
+        formData.append('category', data.category);
+      }
+      formData.append('price', data.price);
+      formData.append('stock_qty', data.stock);
+      formData.append('delivery_days', '3');
+      formData.append('SKU', code);
+      
+      const fileInput = document.getElementById('product-images') as HTMLInputElement;
+      if (fileInput && fileInput.files) {
+        for (let i = 0; i < fileInput.files.length; i++) {
+          formData.append('uploaded_images', fileInput.files[i]);
         }
       }
+
+      if (editingProduct) {
+        await djangoSeller.updateProduct(editingProduct.id, formData);
+        toast.success(`Product updated! Code: ${code}`);
+      } else {
+        await djangoSeller.createProduct(formData);
+        toast.success(`Product added! Code: ${code}`);
+      }
+      
+      // Refresh products
+      const [p, d] = await Promise.all([
+        djangoSeller.products(),
+        djangoSeller.dashboard(),
+      ]);
+      setProducts(
+        (p as any[]).map((prod) => ({
+          ...prod,
+          listings: (prod as any).listings ?? [],
+        })) as (Product & { listings: StoreListing[] })[]
+      );
+      setMetrics({
+        totalProducts: d.totalProducts ?? 0,
+        totalOrders: d.totalOrders ?? 0,
+        revenue: d.revenue ?? 0,
+        pendingOrders: d.pendingOrders ?? 0,
+      });
       
       setDialogOpen(false);
       setEditingProduct(null);

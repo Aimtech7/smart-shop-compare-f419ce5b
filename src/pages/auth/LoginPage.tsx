@@ -82,7 +82,6 @@ export default function LoginPage() {
 
             <p className="text-center text-sm text-muted-foreground">Don't have an account? <Link to={`/auth/signup${isSeller ? '?role=seller' : ''}`} className="text-primary font-medium hover:underline">Sign Up</Link></p>
           </form>
-        </div>
       </div>
     </div>
   );

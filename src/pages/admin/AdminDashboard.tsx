@@ -13,50 +13,7 @@ import { useAdminTheme } from '@/context/AdminThemeContext';
 import { djangoAdmin } from '@/services/django/admin';
 import { DJANGO_CONFIG } from '@/services/django';
 
-// ── Mock data generators ──────────────────────────────────────────────────────
-function makeDays(n: number) {
-  return Array.from({ length: n }).map((_, i) => {
-    const d = new Date();
-    d.setDate(d.getDate() - (n - 1 - i));
-    return d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
-  });
-}
-
-function mockChartData() {
-  const days = makeDays(14);
-  return {
-    orders_per_day: days.map(day => ({
-      day,
-      revenue: Math.floor(Math.random() * 900) + 200,
-      orders: Math.floor(Math.random() * 18) + 2,
-    })),
-    order_status_dist: [
-      { name: 'Delivered', value: 420 },
-      { name: 'Processing', value: 280 },
-      { name: 'Shipped', value: 190 },
-      { name: 'Pending', value: 110 },
-      { name: 'Cancelled', value: 60 },
-    ],
-  };
-}
-
-function mockMetrics() {
-  return { totalUsers: 1284, totalProducts: 347, totalOrders: 2941, totalRevenue: 184320 };
-}
-
-function mockOrders() {
-  return Array.from({ length: 6 }).map((_, i) => ({
-    id: `ord-${String(i + 1042).padStart(4, '0')}`,
-    buyer_name: ['James Okonkwo', 'Amira Hassan', 'Fatima Yusuf', 'Kwame Asante', 'Layla Ibrahim', 'Chidi Nwosu'][i],
-    buyer_email: `user${i + 1}@example.com`,
-    total_amount: String((Math.random() * 400 + 50).toFixed(2)),
-    status: ['delivered', 'shipped', 'processing', 'pending', 'delivered', 'shipped'][i],
-    created_at: new Date(Date.now() - i * 86400000).toISOString(),
-    item_count: [2, 1, 3, 1, 4, 2][i],
-  }));
-}
-
-// ── Sub-components ────────────────────────────────────────────────────────────
+// ── Helper components ────────────────────────────────────────────────────────
 function KpiCard({ label, value, icon: Icon, colorClass, iconBg, trend }: any) {
   return (
     <div className={`rounded-2xl border bg-white dark:bg-slate-900 p-5 shadow-sm hover:-translate-y-0.5 transition-all duration-200 ${colorClass}`}>
@@ -101,9 +58,9 @@ const ttConfig = {
 export default function AdminDashboard() {
   const { theme } = useAdminTheme();
 
-  const [metrics, setMetrics] = useState(mockMetrics());
-  const [charts, setCharts] = useState(mockChartData());
-  const [recentOrders, setRecentOrders] = useState(mockOrders());
+  const [metrics, setMetrics] = useState({ totalUsers: 0, totalProducts: 0, totalOrders: 0, totalRevenue: 0 });
+  const [charts, setCharts] = useState({ orders_per_day: [], order_status_dist: [] });
+  const [recentOrders, setRecentOrders] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [lastRefresh, setLastRefresh] = useState(new Date());
@@ -112,17 +69,6 @@ export default function AdminDashboard() {
   const load = useCallback(async (isRefresh = false) => {
     if (isRefresh) setRefreshing(true);
 
-    if (!DJANGO_CONFIG.enabled) {
-      // Mock mode: show realistic mock data immediately
-      setMetrics(mockMetrics());
-      setCharts(mockChartData());
-      setRecentOrders(mockOrders());
-      setApiOnline(false);
-      setLoading(false);
-      setRefreshing(false);
-      setLastRefresh(new Date());
-      return;
-    }
 
     // Try each API independently — partial success is fine
     let fetchedAny = false;
@@ -237,7 +183,7 @@ export default function AdminDashboard() {
           {/* API status indicator */}
           <div className={`flex items-center gap-1.5 text-xs font-medium px-2.5 py-1.5 rounded-full ${apiOnline ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400' : 'bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400'}`}>
             {apiOnline ? <Wifi className="w-3 h-3" /> : <WifiOff className="w-3 h-3" />}
-            {apiOnline ? 'Live data' : 'Mock data'}
+            {apiOnline ? 'Live data' : 'Offline'}
           </div>
           <button
             onClick={() => load(true)}
