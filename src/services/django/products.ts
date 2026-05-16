@@ -1,4 +1,5 @@
 import { http, fixImageUrl } from './client';
+import { mappers } from './mappers';
 import type { Product, StoreListing, Review } from '@/types';
 
 export interface ProductListParams {
@@ -26,26 +27,13 @@ export const djangoProducts = {
       `/products/${toQuery(params as Record<string, unknown>)}`
     );
     const data = Array.isArray(res) ? res : (res?.data || res?.results || []);
-    return data.map((p: any) => ({
-      ...p,
-      sku: p.SKU || p.sku,
-      createdAt: p.created_at || p.createdAt,
-      updatedAt: p.updated_at || p.updatedAt,
-      images: p.images ? p.images.map((img: any) => typeof img === 'string' ? fixImageUrl(img) : fixImageUrl(img.image)) : [],
-      category: p.category_name || p.category,
-      listings: p.listings || []
-    }));
+    return data.map(mappers.product);
   },
   get: async (id: string) => {
     const res = await http.get<any>(`/products/${id}/`);
     const p = res.data || res;
     return {
-      ...p,
-      sku: p.SKU || p.sku,
-      createdAt: p.created_at || p.createdAt,
-      updatedAt: p.updated_at || p.updatedAt,
-      images: p.images ? p.images.map((img: any) => typeof img === 'string' ? fixImageUrl(img) : fixImageUrl(img.image)) : [],
-      category: p.category_name || p.category,
+      ...mappers.product(p),
       listings: p.listings || []
     } as Product & { listings: StoreListing[] };
   },
