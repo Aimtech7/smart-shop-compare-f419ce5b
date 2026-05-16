@@ -1,21 +1,28 @@
 import { http } from './client';
+import { mappers } from './mappers';
 import type { Order, DeliveryAddress } from '@/types';
 
 export interface CheckoutPayload {
   address: DeliveryAddress;
-  payment_method: 'stripe' | 'cod' | string;
+  payment_method: 'paystack' | 'cod' | string;
 }
 
 export interface CheckoutResponse {
   order: Order;
-  /** Stripe PaymentIntent client secret, if payment_method=stripe */
+  /** Paystack Reference, if payment_method=paystack */
   client_secret?: string;
   payment_intent_id?: string;
 }
 
 export const djangoOrders = {
-  list: () => http.get<Order[]>('/orders/'),
-  get: (id: string) => http.get<Order>(`/orders/${id}/`),
+  list: async () => {
+    const res = await http.get<any[]>('/orders/');
+    return res.map(mappers.order);
+  },
+  get: async (id: string) => {
+    const res = await http.get<any>(`/orders/${id}/`);
+    return mappers.order(res);
+  },
   checkout: (payload: CheckoutPayload) => {
     const addressStr = `${payload.address.street1 || (payload.address as any).street}, ${payload.address.city}, ${payload.address.state} ${payload.address.zip_code || (payload.address as any).zipCode} ${payload.address.country}`;
     return http.post<CheckoutResponse>('/orders/checkout/', {
