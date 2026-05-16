@@ -14,19 +14,10 @@ export default function ProductsPage() {
   useEffect(() => {
     async function load() {
       try {
-        if (DJANGO_CONFIG.enabled) {
-          const res = await djangoAdmin.products();
-          // Handle various response structures: {results: []}, {data: {results: []}}, {data: []}, or []
-          const data = res.results || res.data?.results || res.data || (Array.isArray(res) ? res : []);
-          setProducts(Array.isArray(data) ? data : []);
-        } else {
-          setProducts(Array.from({ length: 10 }).map((_, i) => ({
-            id: `prod-${i}`, name: `Product ${i + 1}`, sku: `SKU-${1000 + i}`,
-            price: (Math.random() * 200 + 20).toFixed(2), stock_qty: Math.floor(Math.random() * 100),
-            is_active: Math.random() > 0.2, category_name: ['Electronics', 'Fashion', 'Home'][i % 3],
-            seller_name: `Seller ${(i % 3) + 1}`,
-          })));
-        }
+        const res = await djangoAdmin.products();
+        // Handle various response structures: {results: []}, {data: {results: []}}, {data: []}, or []
+        const data = res.results || res.data?.results || res.data || (Array.isArray(res) ? res : []);
+        setProducts(Array.isArray(data) ? data : []);
       } catch {
         toast.error('Failed to load products');
       } finally {

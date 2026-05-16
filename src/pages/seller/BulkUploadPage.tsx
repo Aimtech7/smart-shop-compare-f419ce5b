@@ -154,16 +154,14 @@ export default function BulkUploadPage() {
     for (const row of rows) {
       setRows(prev => prev.map(r => r.id === row.id ? { ...r, _status: 'uploading' } : r));
       try {
-        if (DJANGO_CONFIG.enabled) {
-          const fd = new FormData();
-          fd.append('name', `${row.make} ${row.model} ${row.type}`);
-          fd.append('description', row.description || aiDesc(row.make, row.type, row.model, row.specs));
-          fd.append('price', row.price);
-          fd.append('stock_qty', row.stock_qty);
-          fd.append('delivery_days', row.delivery_days || '3');
-          fd.append('SKU', row.SKU || `${row.make.slice(0,3).toUpperCase()}-${row.type.slice(0,3).toUpperCase()}-${Date.now()}`);
-          await djangoSeller.createProduct(fd);
-        }
+        const fd = new FormData();
+        fd.append('name', `${row.make} ${row.model} ${row.type}`);
+        fd.append('description', row.description || aiDesc(row.make, row.type, row.model, row.specs));
+        fd.append('price', row.price);
+        fd.append('stock_qty', row.stock_qty);
+        fd.append('delivery_days', row.delivery_days || '3');
+        fd.append('SKU', row.SKU || `${row.make.slice(0,3).toUpperCase()}-${row.type.slice(0,3).toUpperCase()}-${Date.now()}`);
+        await djangoSeller.createProduct(fd);
         created++;
         setRows(prev => prev.map(r => r.id === row.id ? { ...r, _status: 'success' } : r));
         await new Promise(r => setTimeout(r, 120));

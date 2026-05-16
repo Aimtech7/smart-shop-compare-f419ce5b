@@ -8,12 +8,9 @@ import { Database, Server } from 'lucide-react';
 export function ApiModeBadge() {
   if (import.meta.env.PROD) return null;
 
-  const isDjango = DJANGO_CONFIG.enabled;
-  const Icon = isDjango ? Server : Database;
-  const label = isDjango ? 'Django API' : 'Mock Data';
-  const colorClass = isDjango
-    ? 'bg-success/15 text-success border-success/30'
-    : 'bg-warning/15 text-warning border-warning/30';
+  const Icon = Server;
+  const label = 'Live API';
+  const colorClass = 'bg-success/15 text-success border-success/30';
 
   return (
     <div

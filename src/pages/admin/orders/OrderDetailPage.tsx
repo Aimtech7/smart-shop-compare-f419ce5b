@@ -23,23 +23,8 @@ export default function OrderDetailPage() {
   useEffect(() => {
     async function load() {
       try {
-        if (DJANGO_CONFIG.enabled) {
-          const res = await djangoAdmin.order(id!);
-          setOrder(res.data || res);
-        } else {
-          // Mock order
-          setOrder({
-            id, status: 'processing', total_amount: '247.99', created_at: new Date().toISOString(),
-            buyer_name: 'John Doe', buyer_email: 'john@example.com', buyer_phone: '+1 (555) 123-4567',
-            shipping_address: { street1: '123 Main St', city: 'San Francisco', state: 'CA', zip_code: '94105', country: 'US' },
-            payment_method: 'stripe', stripe_payment_intent: 'pi_mock_123',
-            items: [
-              { id: '1', product_name: 'Wireless Headphones', quantity: 1, unit_price: '149.99' },
-              { id: '2', product_name: 'USB-C Cable', quantity: 2, unit_price: '19.99' },
-              { id: '3', product_name: 'Phone Stand', quantity: 1, unit_price: '58.02' },
-            ],
-          });
-        }
+        const res = await djangoAdmin.order(id!);
+        setOrder(res.data || res);
       } catch {
         toast.error('Failed to load order');
       } finally {
@@ -52,9 +37,7 @@ export default function OrderDetailPage() {
   const handleAction = async (action: string) => {
     setActing(action);
     try {
-      if (DJANGO_CONFIG.enabled) {
-        await djangoAdmin.orderAction(id!, action);
-      }
+      await djangoAdmin.orderAction(id!, action);
       const newStatus = { mark_paid: 'processing', mark_shipped: 'shipped', mark_delivered: 'delivered', cancel: 'cancelled' }[action];
       setOrder((o: any) => ({ ...o, status: newStatus }));
       toast.success(`Order updated to ${newStatus}`);
@@ -179,12 +162,12 @@ export default function OrderDetailPage() {
             <div className="text-sm space-y-2">
               <div className="flex justify-between">
                 <span className="text-slate-500">Method</span>
-                <span className="font-medium text-slate-900 dark:text-white capitalize">{order.payment_method || 'Stripe'}</span>
+                <span className="font-medium text-slate-900 dark:text-white capitalize">{order.payment_method || 'Paystack'}</span>
               </div>
-              {order.stripe_payment_intent && (
+              {order.payment_ref && order.payment_method !== 'cod' && (
                 <div className="flex justify-between">
                   <span className="text-slate-500">Ref</span>
-                  <span className="font-mono text-xs text-slate-400 truncate max-w-[130px]">{order.stripe_payment_intent}</span>
+                  <span className="font-mono text-xs text-slate-400 truncate max-w-[130px]">{order.payment_ref}</span>
                 </div>
               )}
               <div className="flex justify-between pt-2 border-t border-slate-100 dark:border-slate-800">

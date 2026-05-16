@@ -74,7 +74,7 @@ export const api = {
   // ─── Wishlist ────────────────────────────────────────────────
   wishlist: djangoWishlist,
 
-  // ─── Cart (Django-only; mock cart lives in zustand store) ────
+  // ─── Cart (Production API Layer) ────────────────────────────
   cart: djangoCart,
 
   // ─── Payments ────────────────────────────────────────────────

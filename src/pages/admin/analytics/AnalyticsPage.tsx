@@ -19,28 +19,16 @@ export default function AnalyticsPage() {
   useEffect(() => {
     async function load() {
       try {
-        if (DJANGO_CONFIG.enabled) {
-          const res = await djangoAdmin.analytics();
-          const d = res.data || res;
-          setData({
-            orders_per_day: (d.orders_per_day || []).map((o: any) => ({
-              day: new Date(o.day).toLocaleDateString(undefined, { month: 'short', day: 'numeric' }),
-              revenue: parseFloat(o.revenue || 0), orders: o.count,
-            })),
-            top_products: d.top_products || [],
-            top_sellers: d.top_sellers || [],
-          });
-        } else {
-          const days = Array.from({ length: 30 }).map((_, i) => {
-            const d = new Date(); d.setDate(d.getDate() - (29 - i));
-            return d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
-          });
-          setData({
-            orders_per_day: days.map(day => ({ day, revenue: Math.floor(Math.random() * 1000) + 100, orders: Math.floor(Math.random() * 20) + 1 })),
-            top_products: Array.from({ length: 5 }).map((_, i) => ({ name: `Product ${i + 1}`, total_qty: Math.floor(Math.random() * 100) + 10 })),
-            top_sellers: Array.from({ length: 5 }).map((_, i) => ({ seller_name: `Seller ${i + 1}`, avg_rating: (4 + Math.random()).toFixed(1) })),
-          });
-        }
+        const res = await djangoAdmin.analytics();
+        const d = res.data || res;
+        setData({
+          orders_per_day: (d.orders_per_day || []).map((o: any) => ({
+            day: new Date(o.day).toLocaleDateString(undefined, { month: 'short', day: 'numeric' }),
+            revenue: parseFloat(o.revenue || 0), orders: o.count,
+          })),
+          top_products: d.top_products || [],
+          top_sellers: d.top_sellers || [],
+        });
       } catch {
         toast.error('Failed to load analytics');
       } finally {

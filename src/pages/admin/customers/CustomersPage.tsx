@@ -15,18 +15,9 @@ export default function CustomersPage() {
   useEffect(() => {
     async function load() {
       try {
-        if (DJANGO_CONFIG.enabled) {
-          const res = await djangoAdmin.customers();
-          const data = res.results || res.data || [];
-          setCustomers(Array.isArray(data) ? data : []);
-        } else {
-          setCustomers(Array.from({ length: 12 }).map((_, i) => ({
-            id: `u-${i}`, name: `Customer ${i + 1}`, email: `user${i + 1}@example.com`,
-            phone: `+1555${1000 + i}`, is_active: i % 5 !== 0,
-            date_joined: new Date(Date.now() - i * 7 * 86400000).toISOString(),
-            total_orders: Math.floor(Math.random() * 20),
-          })));
-        }
+        const res = await djangoAdmin.customers();
+        const data = res.results || res.data || [];
+        setCustomers(Array.isArray(data) ? data : []);
       } catch {
         toast.error('Failed to load customers');
       } finally {
@@ -39,10 +30,8 @@ export default function CustomersPage() {
   const toggle = async (id: string, currentlyActive: boolean) => {
     setActing(id);
     try {
-      if (DJANGO_CONFIG.enabled) {
-        if (currentlyActive) await djangoAdmin.suspendUser(id);
-        else await djangoAdmin.activateUser(id);
-      }
+      if (currentlyActive) await djangoAdmin.suspendUser(id);
+      else await djangoAdmin.activateUser(id);
       setCustomers(cs => cs.map(c => c.id === id ? { ...c, is_active: !currentlyActive } : c));
       toast.success(`Customer ${currentlyActive ? 'suspended' : 'activated'}`);
     } catch (err: any) {
