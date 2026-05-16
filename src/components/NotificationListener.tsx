@@ -18,7 +18,7 @@ export const NotificationListener = () => {
       const base = envWsBase.endsWith('/') ? envWsBase.slice(0, -1) : envWsBase;
       wsUrl = `${base}/notifications/`;
     } else {
-      const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+      const protocol = DJANGO_CONFIG.baseUrl.startsWith('https') ? 'wss:' : 'ws:';
       const host = DJANGO_CONFIG.baseUrl
         .replace(/^https?:\/\//, '')
         .split('/api')[0];

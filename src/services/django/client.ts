@@ -10,7 +10,6 @@
 
 export const DJANGO_CONFIG = {
   baseUrl: import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api/v1',
-  enabled: true, // Forced true for production transition
 };
 
 // Helper to get the backend root (e.g., http://localhost:8000) for media files

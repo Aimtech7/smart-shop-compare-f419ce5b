@@ -79,5 +79,7 @@ class WebSocketClient {
   }
 }
 
-const wsUrl = import.meta.env.VITE_WS_BASE_URL || 'ws://localhost:8000/ws/';
+const apiBase = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api/v1';
+const defaultWs = apiBase.replace('http', 'ws').split('/api')[0] + '/ws/';
+const wsUrl = import.meta.env.VITE_WS_BASE_URL || defaultWs;
 export const wsClient = new WebSocketClient(wsUrl);
